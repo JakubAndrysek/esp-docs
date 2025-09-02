@@ -34,7 +34,6 @@ def _render_iframe_attrs(node: WokwiNode) -> tuple[str, str, str]:
 
 # --- Single Wokwi (keep header with info + fullscreen only) ---
 
-
 def visit_wokwi_html(self, node: WokwiNode):
     if node.get("suppress_header"):
         attr_str, allow, _ = _render_iframe_attrs(node)
@@ -50,10 +49,8 @@ def visit_wokwi_html(self, node: WokwiNode):
         self.body.append(
             f'<a class="wokwi-info-btn" href="{_escape(info_url, True)}" target="_blank" rel="noopener" title="About Wokwi">ⓘ</a>'
         )
-    self.body.append(
-        '<a class="wokwi-fullscreen-btn" href="#" title="Fullscreen simulation">⛶</a>'
-    )
-    self.body.append("</div></div>")
+    self.body.append('<a class="wokwi-fullscreen-btn" href="#" title="Fullscreen simulation">⛶</a>')
+    self.body.append('</div></div>')
     self.body.append(f"<iframe {attr_str}{allow}></iframe>")
     self.body.append("</div>")
     raise _n.SkipNode
@@ -65,11 +62,8 @@ def depart_wokwi_html(self, node: WokwiNode):
 
 # --- Tabs container ---
 
-
 def visit_wokwi_tabs_html(self, node: WokwiTabsNode):
-    classes = "wokwi-tabs" + (
-        " " + " ".join(node.get("classes", [])) if node.get("classes") else ""
-    )
+    classes = "wokwi-tabs" + (" " + " ".join(node.get("classes", [])) if node.get("classes") else "")
     self.body.append(f'<div class="{classes}">')
 
 
@@ -83,11 +77,13 @@ def visit_tablist_html(self, node: TabListNode):
     info_url = getattr(self.builder.app.config, "wokwi_info_url", None)
 
     self.body.append('<div class="wokwi-tabsbar">')
-    self.body.append('<div class="wokwi-tablist" role="tablist">')
+    # IMPORTANT: no ARIA role here to avoid sphinx-tabs CSS/JS collisions
+    self.body.append('<div class="wokwi-tablist" data-wokwi="tablist">')
     for i, (label, pid) in enumerate(zip(labels, panel_ids)):
         selected = "true" if i == 0 else "false"
+        # Keep role="tab" for accessibility; it isn’t targeted by sphinx-tabs CSS
         self.body.append(
-            f'<button class="wokwi-tab" role="tab" aria-selected="{selected}" data-target="{pid}">{_escape(label, True)}</button>'
+            f'<button class="wokwi-tab" type="button" role="tab" aria-selected="{selected}" data-target="{pid}">{_escape(label, True)}</button>'
         )
     self.body.append("</div>")  # tablist
 
@@ -97,9 +93,7 @@ def visit_tablist_html(self, node: TabListNode):
         self.body.append(
             f'<a class="wokwi-info-btn" href="{_escape(info_url, True)}" target="_blank" rel="noopener" title="About Wokwi">ⓘ</a>'
         )
-    self.body.append(
-        '<a class="wokwi-fullscreen-btn" href="#" title="Fullscreen simulation">⛶</a>'
-    )
+    self.body.append('<a class="wokwi-fullscreen-btn" href="#" title="Fullscreen simulation">⛶</a>')
     self.body.append("</div>")  # actions
 
     self.body.append("</div>")  # tabsbar
@@ -122,31 +116,26 @@ def visit_tabpanel_html(self, node: TabPanelNode):
             break
 
     data_attr = f' data-viewer-url="{_escape(viewer_url, True)}"' if viewer_url else ""
-    self.body.append(
-        f'<div class="wokwi-panel" id="{pid}" role="tabpanel" data-active="{active}"{data_attr}>'
-    )
+    self.body.append(f'<div class="wokwi-panel" id="{pid}" role="tabpanel" data-active="{active}"{data_attr}>')
 
 
 def depart_tabpanel_html(self, node: TabPanelNode):
     self.body.append("</div>")
 
 
-# --- Text / LaTeX fallbacks unchanged ---
-
+# --- Text / LaTeX fallbacks ---
 
 def _fallback_text(viewer_url: str) -> str:
     return f"Wokwi simulation: {viewer_url}"
 
 
 def visit_wokwi_text(self, node: WokwiNode):
-    viewer_url = build_viewer_url(
-        node.get("viewer_base"), node.get("diagram"), node.get("firmware")
-    )
+    viewer_url = build_viewer_url(node.get("viewer_base"), node.get("diagram"), node.get("firmware"))
     self.add_text(_fallback_text(viewer_url))
     raise _n.SkipNode
 
 
-def depart_wokwi_text(self, node: WokwiNode):
+def depart_wokwi_text(self, node: WokwiNode):  # noqa: D401
     pass
 
 
@@ -179,9 +168,7 @@ def depart_tabpanel_text(self, node: TabPanelNode):
 
 
 def visit_wokwi_latex(self, node: WokwiNode):
-    viewer_url = build_viewer_url(
-        node.get("viewer_base"), node.get("diagram"), node.get("firmware")
-    )
+    viewer_url = build_viewer_url(node.get("viewer_base"), node.get("diagram"), node.get("firmware"))
     self.body.append(r"\url{" + viewer_url + "}")
     raise _n.SkipNode
 
@@ -210,7 +197,8 @@ def depart_tablist_latex(self, node: TabListNode):
 
 
 def visit_tabpanel_latex(self, node: TabPanelNode):
-    self.body.append("\\textbf{" + (node.get("label") or "Tab") + "}: ")
+    label = node.get("label") or "Tab"
+    self.body.append("\\textbf{" + label + "}: ")
 
 
 def depart_tabpanel_latex(self, node: TabPanelNode):

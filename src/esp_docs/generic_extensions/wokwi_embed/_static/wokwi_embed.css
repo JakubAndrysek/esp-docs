@@ -18,7 +18,10 @@
   flex-wrap: wrap;
 }
 
-/* Tabs list */
+/* Our tablist — avoid sphinx-tabs global CSS */
+.wokwi-tabsbar .wokwi-tablist { border: 0 !important; }
+
+/* Tabs */
 .wokwi-tablist {
   display: flex;
   gap: .25rem;
@@ -27,22 +30,27 @@
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
 }
+
 .wokwi-tab {
   padding: .35rem .6rem;
   cursor: pointer;
-  border: 0;
+  border: 1px solid transparent;
   background: transparent;
-  font-size: .85rem;
+  font-size: .9rem;
   white-space: nowrap;
   flex: 0 0 auto;
   border-radius: .375rem;
 }
+
+/* Higher-contrast selected tab */
 .wokwi-tab[aria-selected="true"] {
-  background: #f3f4f6;
-  font-weight: 600;
+  background: #e2e8f0;       /* slate-200 */
+  border-color: #94a3b8;     /* slate-400 */
+  color: #0f172a;            /* slate-900 */
+  font-weight: 700;
 }
 
-/* Right-side actions (no Open button anymore) */
+/* Right-side actions */
 .wokwi-actions {
   margin-left: auto;
   display: flex;
@@ -64,7 +72,7 @@
   background: #eef2f7;
 }
 
-/* Panels — no padding/gap; also trim bottom margin of last child (e.g., code blocks) */
+/* Panels — no padding/gap; trim bottom margin under code */
 .wokwi-panel { display: none; padding: 0; }
 .wokwi-panel[data-active="true"] { display: block; }
 .wokwi-panel > *:last-child { margin-bottom: 0 !important; }
@@ -80,7 +88,7 @@
 
 /* Responsive */
 @media (max-width: 480px) {
-  .wokwi-tab { font-size: .8rem; padding: .3rem .5rem; }
+  .wokwi-tab { font-size: .85rem; padding: .3rem .5rem; }
   .wokwi-panel iframe { height: 360px !important; }
 }
 
