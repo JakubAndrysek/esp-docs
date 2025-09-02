@@ -7,6 +7,7 @@ idf_targets = TARGETS
 
 extensions += ['sphinx_copybutton',
                'sphinxcontrib.wavedrom',
+               'esp_docs.generic_extensions.wokwi_embed',
                ]
 
 # link roles config
@@ -27,3 +28,6 @@ versions_url = './_static/docs_version.js'
 
 # Final PDF filename will contains target and version
 pdf_file_prefix = u'esp-docs'
+
+# Wokwi info URL
+wokwi_info_url = "https://docs.wokwi.com/"

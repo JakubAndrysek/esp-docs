@@ -1,0 +1,126 @@
+/* Container frames */
+.wokwi-frame,
+.wokwi-tabs {
+  border: 1px solid #e5e7eb;
+  border-radius: .5rem;
+  margin: .75rem 0;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+
+/* Header bar */
+.wokwi-tabsbar {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .35rem .5rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-wrap: wrap;
+}
+
+/* Tabs list */
+.wokwi-tablist {
+  display: flex;
+  gap: .25rem;
+  flex-wrap: wrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.wokwi-tab {
+  padding: .35rem .6rem;
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  font-size: .85rem;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  border-radius: .375rem;
+}
+.wokwi-tab[aria-selected="true"] {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+/* Right-side actions (no Open button anymore) */
+.wokwi-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+.wokwi-info-btn,
+.wokwi-fullscreen-btn {
+  text-decoration: none;
+  font-weight: 600;
+  line-height: 1;
+  padding: .35rem .45rem;
+  border-radius: .375rem;
+  background: #f8fafc;
+  color: #111827;
+}
+.wokwi-info-btn:hover,
+.wokwi-fullscreen-btn:hover {
+  background: #eef2f7;
+}
+
+/* Panels — no padding/gap; also trim bottom margin of last child (e.g., code blocks) */
+.wokwi-panel { display: none; padding: 0; }
+.wokwi-panel[data-active="true"] { display: block; }
+.wokwi-panel > *:last-child { margin-bottom: 0 !important; }
+.wokwi-panel .highlight { margin-bottom: 0 !important; }
+
+/* Iframes */
+.wokwi-panel iframe,
+.wokwi-frame iframe {
+  width: 100%;
+  height: 500px; /* overridden by element attribute */
+  border: 0;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .wokwi-tab { font-size: .8rem; padding: .3rem .5rem; }
+  .wokwi-panel iframe { height: 360px !important; }
+}
+
+/* Modal overlay for fullscreen */
+.wokwi-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.66);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2147483647;
+}
+.wokwi-modal__inner {
+  background: #0b1020;
+  width: 96vw;
+  height: 92vh;
+  max-width: 1400px;
+  border-radius: .5rem;
+  position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  overflow: hidden;
+}
+.wokwi-modal__close {
+  position: fixed;
+  top: 10px;
+  right: 12px;
+  background: rgba(255,255,255,.85);
+  color: #111827;
+  border: 0;
+  border-radius: .375rem;
+  padding: .35rem .5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  z-index: 2147483648;
+}
+.wokwi-modal__close:hover { background: rgba(255,255,255,1); }
+.wokwi-modal__frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #0b1020;
+}
