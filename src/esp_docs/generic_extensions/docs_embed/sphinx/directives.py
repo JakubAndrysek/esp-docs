@@ -178,7 +178,8 @@ class WokwiExampleDirective(Directive):
             wokwi_nodes.append(wn)
 
         # Now create the tab structure similar to WokwiTabsDirective
-        panels: List[TabPanelNode] = []
+        code_panels: List[TabPanelNode] = []
+        wokwi_panels: List[TabPanelNode] = []
 
         # Add source code tab first if .ino file exists
         if ino_files:
@@ -199,7 +200,7 @@ class WokwiExampleDirective(Directive):
                 source_panel["label"] = ino_filename
                 source_panel["active"] = True  # Source code tab is active by default
                 source_panel.children = [code_block]
-                panels.append(source_panel)
+                code_panels.append(source_panel)
             except Exception:
                 # If we can't read the file, skip the source code tab
                 pass
@@ -209,7 +210,10 @@ class WokwiExampleDirective(Directive):
             panel["label"] = wn["tab_label"]
             panel["active"] = (i == 0 and not ino_files)  # First wokwi tab is active only if no source code tab
             panel.children = [wn]
-            panels.append(panel)
+            wokwi_panels.append(panel)
+
+        # Combine all panels
+        panels = code_panels + wokwi_panels
 
         # Create tabs structure
         env = getattr(self.state.document.settings, "env", None)
@@ -222,6 +226,18 @@ class WokwiExampleDirective(Directive):
         tablist["labels"] = labels
         panel_ids = [f"{root_id}-panel-{i}" for i in range(len(panels))]
         tablist["panel_ids"] = panel_ids
+
+        # Separate labels for code and wokwi
+        tabs_code = [p.get("label") for p in code_panels]
+        tabs_wokwi = [p.get("label") for p in wokwi_panels]
+        tablist["tabs_code"] = tabs_code
+        tablist["tabs_wokwi"] = tabs_wokwi
+
+        # Separate root_ids
+        root_id_code = f"{root_id}-code" if tabs_code else None
+        root_id_wokwi = f"{root_id}-wokwi" if tabs_wokwi else None
+        tablist["root_id_code"] = root_id_code
+        tablist["root_id_wokwi"] = root_id_wokwi
 
         # Always add launchpad support
         launchpad_toml_path = os.path.join(env.srcdir, docs_embed_root, example_path, ".gen/launchpad.toml")

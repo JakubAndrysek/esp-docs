@@ -47,25 +47,48 @@
   border-radius: .375rem;
   padding: .5rem;
   margin: .25rem 0;
-}
-
-/* Tabs */
-.wokwi-tablist {
   display: flex;
-  gap: .25rem;
+  gap: 1rem;
   flex-wrap: wrap;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  -webkit-overflow-scrolling: touch;
 }
 
-/* Chip-specific tablist */
-.wokwi-chip-tablist {
+/* Tab group container */
+.wokwi-tab-group {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+
+/* Tab group label */
+.wokwi-tab-group-label {
+  font-size: .75rem;
+  font-weight: 600;
+  color: #64748b;            /* slate-500 */
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  padding: 0 .25rem;
+}
+
+/* Code tablist styling */
+.wokwi-code-tablist {
   display: flex;
   gap: .35rem;
   flex-wrap: wrap;
-  justify-content: center;
   padding: .25rem;
+  background: #f1f5f9;        /* slate-100 */
+  border-radius: .25rem;
+  border: 1px solid #cbd5e1;  /* slate-300 */
+}
+
+/* Wokwi tablist styling */
+.wokwi-wokwi-tablist {
+  display: flex;
+  gap: .35rem;
+  flex-wrap: wrap;
+  padding: .25rem;
+  background: #ffffff;
+  border-radius: .25rem;
+  border: 1px solid #d1d5db;  /* gray-300 */
 }
 
 .wokwi-tab {
@@ -80,28 +103,28 @@
   transition: all 0.2s ease;
 }
 
-/* Source code tab styling */
-.wokwi-source-tab {
+/* Code tab styling */
+.wokwi-code-tab {
   background: #f1f5f9;       /* slate-100 */
   border-color: #cbd5e1;     /* slate-300 */
   color: #475569;            /* slate-600 */
 }
 
-.wokwi-source-tab:hover {
+.wokwi-code-tab:hover {
   background: #e2e8f0;       /* slate-200 */
   border-color: #94a3b8;     /* slate-400 */
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0,0,0,.1);
 }
 
-/* Chip tab styling */
-.wokwi-chip-tab {
+/* Wokwi tab styling */
+.wokwi-wokwi-tab {
   background: #ffffff;
   border-color: #d1d5db;     /* gray-300 */
   color: #374151;            /* gray-700 */
 }
 
-.wokwi-chip-tab:hover {
+.wokwi-wokwi-tab:hover {
   background: #f9fafb;       /* gray-50 */
   border-color: #9ca3af;     /* gray-400 */
   transform: translateY(-1px);

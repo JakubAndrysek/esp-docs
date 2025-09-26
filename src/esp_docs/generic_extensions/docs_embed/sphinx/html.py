@@ -76,6 +76,8 @@ def depart_wokwi_tabs_html(self, node: WokwiTabsNode):
 def visit_tablist_html(self, node: TabListNode):
     labels = node.get("labels", [])
     panel_ids = node.get("panel_ids", [])
+    tabs_code = node.get("tabs_code", [])
+    tabs_wokwi = node.get("tabs_wokwi", [])
     about_wokwi_url = getattr(self.builder.app.config, "about_wokwi_url", None)
     launchpad_href = node.get("launchpad_href")
     launchpad_icon = node.get("launchpad_icon")
@@ -84,24 +86,41 @@ def visit_tablist_html(self, node: TabListNode):
 
     # Container for chip tabs with light gray background
     self.body.append('<div class="wokwi-chip-tabs-container">')
-    self.body.append('<div class="wokwi-tablist wokwi-chip-tablist" data-wokwi="tablist">')
 
-    # Render all tabs
-    for i, (label, pid) in enumerate(zip(labels, panel_ids)):
-        selected = "true" if i == 0 else "false"
-        chip_class = "wokwi-tab"
+    # Render code tabs first
+    if tabs_code:
+        self.body.append('<div class="wokwi-tab-group">')
+        self.body.append('<div class="wokwi-tab-group-label">Code</div>')
+        self.body.append('<div class="wokwi-tablist wokwi-code-tablist" data-wokwi="tablist">')
+        for i, label in enumerate(tabs_code):
+            # Find corresponding panel_id
+            panel_index = labels.index(label)
+            pid = panel_ids[panel_index]
+            selected = "true" if i == 0 else "false"
+            self.body.append(
+                f'<button class="wokwi-tab wokwi-code-tab" type="button" role="tab" '
+                f'aria-selected="{selected}" data-target="{pid}">{_escape(label, True)}</button>'
+            )
+        self.body.append("</div>")  # code tablist
+        self.body.append("</div>")  # tab group
 
-        if label.endswith('.ino'):
-            chip_class += " wokwi-source-tab"
-        else:
-            chip_class += " wokwi-chip-tab"
+    # Render wokwi tabs
+    if tabs_wokwi:
+        self.body.append('<div class="wokwi-tab-group">')
+        self.body.append('<div class="wokwi-tab-group-label">Wokwi</div>')
+        self.body.append('<div class="wokwi-tablist wokwi-wokwi-tablist" data-wokwi="tablist">')
+        for i, label in enumerate(tabs_wokwi):
+            # Find corresponding panel_id
+            panel_index = labels.index(label)
+            pid = panel_ids[panel_index]
+            selected = "true" if i == 0 and not tabs_code else "false"
+            self.body.append(
+                f'<button class="wokwi-tab wokwi-wokwi-tab" type="button" role="tab" '
+                f'aria-selected="{selected}" data-target="{pid}">{_escape(label, True)}</button>'
+            )
+        self.body.append("</div>")  # wokwi tablist
+        self.body.append("</div>")  # tab group
 
-        self.body.append(
-            f'<button class="{chip_class}" type="button" role="tab" '
-            f'aria-selected="{selected}" data-target="{pid}">{_escape(label, True)}</button>'
-        )
-
-    self.body.append("</div>")  # tablist
     self.body.append("</div>")  # wokwi-chip-tabs-container
 
     # Actions (right)
