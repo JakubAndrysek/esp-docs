@@ -10,7 +10,7 @@ __all__ = [
     "css_size",
     "loading_choice",
     "slug_lower",
-    "build_viewer_url",
+    "iframe_url",
 ]
 
 _escape = html.escape
@@ -39,7 +39,7 @@ def slug_lower(name: str) -> str:
     return s
 
 
-def build_viewer_url(base: str, diagram: Optional[str], firmware: Optional[str]) -> str:
+def iframe_url(base: str, diagram: Optional[str], firmware: Optional[str]) -> str:
     params: Dict[str, str] = {}
     if diagram:
         params["diagram"] = diagram
@@ -47,8 +47,3 @@ def build_viewer_url(base: str, diagram: Optional[str], firmware: Optional[str])
         params["firmware"] = firmware
     qs = urlencode(params, quote_via=quote, safe="")
     return base + (("?" + qs) if qs else "")
-
-
-# expose directives validators for convenience where needed
-css_size_directive = css_size
-loading_choice_directive = loading_choice

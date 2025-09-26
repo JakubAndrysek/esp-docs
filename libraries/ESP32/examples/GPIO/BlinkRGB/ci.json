@@ -1,0 +1,33 @@
+{
+    "upload-binary": {
+        "targets": ["esp32", "esp32s2", "esp32s3"], 
+        "diagram": {
+            "esp32": {
+                "parts": [
+                    {
+                        "type": "wokwi-led", 
+                        "id": "led1", 
+                        "top": 92.4, 
+                        "left": 263, 
+                        "attrs": {"color": "red"}
+                    }
+                ], 
+                "connections": [
+                    [ "led1:C", "esp:0", "green", ["v19.2", "h-9.2"] ]
+                ]
+            }, 
+            "esp32s2": {
+                "parts": [
+                    {
+                        "type": "wokwi-led", 
+                        "id": "led1", 
+                        "top": 92.4, 
+                        "left": -197.8, 
+                        "attrs": {"color": "red"}
+                    }
+                ], 
+                "connections": []
+            }
+        }
+    }
+}

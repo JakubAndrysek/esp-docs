@@ -12,6 +12,25 @@
     actions.style.display = hasWokwi ? "" : "none";
   }
 
+  function updateLaunchpadUrl(root, selectedBtn) {
+    var launchpadBtn = root.querySelector('.wokwi-launchpad-btn');
+    if (!launchpadBtn) return;
+
+    var baseHref = launchpadBtn.getAttribute('data-base-href');
+    if (!baseHref) return;
+
+    var chip = selectedBtn.getAttribute('data-chip');
+    if (chip) {
+      // Add chip parameter to launchpad URL
+      var separator = baseHref.includes('?') ? '&' : '?';
+      var newHref = baseHref + separator + 'chip=' + encodeURIComponent(chip);
+      launchpadBtn.setAttribute('href', newHref);
+    } else {
+      // Use base href for non-chip tabs (source code)
+      launchpadBtn.setAttribute('href', baseHref);
+    }
+  }
+
   function onTabClick(e) {
     var btn = e.target.closest('.wokwi-tab');
     if (!btn) return;
@@ -26,6 +45,9 @@
     root.querySelectorAll('.wokwi-panel').forEach(function(p) {
       p.dataset.active = String(p.id === id);
     });
+
+    // Update launchpad URL based on selected chip
+    updateLaunchpadUrl(root, btn);
 
     setActionsVisibility(root);
   }
@@ -86,6 +108,14 @@
   document.addEventListener('click', onFullscreenClick);
 
   document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.wokwi-tabs').forEach(setActionsVisibility);
+    document.querySelectorAll('.wokwi-tabs').forEach(function(root) {
+      setActionsVisibility(root);
+
+      // Initialize launchpad URL for the active tab
+      var activeTab = root.querySelector('.wokwi-tab[aria-selected="true"]');
+      if (activeTab) {
+        updateLaunchpadUrl(root, activeTab);
+      }
+    });
   });
 })();

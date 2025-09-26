@@ -9,6 +9,7 @@ import rich_click as click
 from esp_docs.generic_extensions.docs_embed.tool.file_upload import FileUploader
 from esp_docs.generic_extensions.docs_embed.tool.wokwi_tool import DiagramSync, target_to_boards
 
+
 # CLI Commands
 @click.group(
     help="docs-embed: Utility to manage Wokwi diagrams and ESP LaunchPad configurations",
@@ -27,7 +28,6 @@ def main(ctx: click.Context, path: str):
     ctx.obj["path"] = path
 
 
-# command init-project --platforms esp32,esp32s2,esp32s3 --diagram (default true) --ci (default false) --override (default false)
 @main.command(name="init-project")
 @click.option(
     "--platforms",

@@ -3,24 +3,22 @@ from __future__ import annotations
 from typing import Optional
 from docutils import nodes as _n
 
-from .helpers import _escape, build_viewer_url
+from .helpers import _escape, iframe_url
 from .nodes import WokwiNode, WokwiTabsNode, TabListNode, TabPanelNode
 
 
 def _render_iframe_attrs(node: WokwiNode) -> tuple[str, str, str]:
-    base = node.get("viewer_base")
-    diagram = node.get("diagram")
+    iframe_page = node.get("iframe_page")
+    diagram_path = node.get("diagram")
     firmware = node.get("firmware")
     width = node.get("width")
     height = node.get("height")
-    title = node.get("title") or "Wokwi simulation"
     loading = node.get("loading", "lazy")
     classes = " ".join(node.get("classes", []))
-    viewer_url = build_viewer_url(base, diagram, firmware)
+    viewer_url = iframe_url(iframe_page, diagram_path, firmware)
 
     attrs = {
         "src": _escape(viewer_url, quote=True),
-        "title": _escape(title, quote=True),
         "width": _escape(str(width), quote=True),
         "height": _escape(str(height), quote=True),
         "loading": _escape(str(loading), quote=True),
@@ -79,24 +77,72 @@ def visit_tablist_html(self, node: TabListNode):
     variant = node.get("variant")
     launchpad_href = node.get("launchpad_href")
     launchpad_icon = node.get("launchpad_icon")
-
-    launchpad_href = "https://espressif.github.io/esp-launchpad/"
-    launchpad_icon = "https://raw.githubusercontent.com/espressif/esp-launchpad/24bb22db7e4d6b2182e054d2f482532511c60475/assets/esp_launchpad.svg"
+    chip_info = node.get("chip_info", [])
 
     self.body.append('<div class="wokwi-tabsbar">')
 
-    # Badge left side (only for TOML variant)
-    if variant == "toml":
+    # Badge above chip tabs (for example variants)
+    if variant == "example":
+        self.body.append('<div class="wokwi-badge-container">')
+        self.body.append('<span class="wokwi-badge">Wokwi simulation</span>')
+        self.body.append('</div>')
+    elif variant == "toml":
         self.body.append('<span class="wokwi-badge">Wokwi simulation</span>')
 
+    # Container for chip tabs with light gray background
+    if variant == "example":
+        self.body.append('<div class="wokwi-chip-tabs-container">')
+
     # IMPORTANT: avoid role="tablist" to keep sphinx-tabs CSS from styling us
-    self.body.append('<div class="wokwi-tablist" data-wokwi="tablist">')
-    for i, (label, pid) in enumerate(zip(labels, panel_ids)):
-        selected = "true" if i == 0 else "false"
+    tablist_class = "wokwi-tablist"
+    if variant == "example":
+        tablist_class += " wokwi-chip-tablist"
+
+    self.body.append(f'<div class="{tablist_class}" data-wokwi="tablist">')
+
+    # Separate source code tab from chip tabs
+    source_tab_index = -1
+    for i, label in enumerate(labels):
+        if label.endswith('.ino'):
+            source_tab_index = i
+            break
+
+    # Render source code tab first (if exists)
+    if source_tab_index >= 0:
+        label = labels[source_tab_index]
+        pid = panel_ids[source_tab_index]
+        selected = "true" if source_tab_index == 0 else "false"
         self.body.append(
-            f'<button class="wokwi-tab" type="button" role="tab" aria-selected="{selected}" data-target="{pid}">{_escape(label, True)}</button>'
+            f'<button class="wokwi-tab wokwi-source-tab" type="button" role="tab" '
+            f'aria-selected="{selected}" data-target="{pid}">{_escape(label, True)}</button>'
         )
+
+    # Close source tabs container and start chip tabs
+    if variant == "example" and source_tab_index >= 0:
+        self.body.append("</div>")  # close first tablist
+        self.body.append('<div class="wokwi-chip-tablist" data-wokwi="tablist">')
+
+    # Render chip tabs
+    for i, (label, pid) in enumerate(zip(labels, panel_ids)):
+        if i == source_tab_index:
+            continue  # Skip source tab, already rendered
+
+        selected = "true" if i == 0 and source_tab_index < 0 else "false"
+        chip_class = "wokwi-tab wokwi-chip-tab"
+
+        # Add chip-specific data for launchpad URL
+        chip_data = ""
+        if i < len(chip_info):
+            chip_data = f' data-chip="{chip_info[i]}"'
+
+        self.body.append(
+            f'<button class="{chip_class}" type="button" role="tab" aria-selected="{selected}" data-target="{pid}"{chip_data}>{_escape(label, True)}</button>'
+        )
+
     self.body.append("</div>")  # tablist
+
+    if variant == "example":
+        self.body.append("</div>")  # wokwi-chip-tabs-container
 
     # Actions (right)
     self.body.append('<div class="wokwi-actions" data-wokwi-only="true">')
@@ -106,10 +152,14 @@ def visit_tablist_html(self, node: TabListNode):
         )
     self.body.append('<a class="wokwi-fullscreen-btn" href="#" title="Fullscreen simulation">⛶</a>')
 
-    # Launchpad button (TOML variant; only if we know an http(s) TOML URL)
-    if variant == "toml":
+    # Launchpad button (TOML and example variants; always show if we have icon)
+    if variant in ("toml", "example") and launchpad_icon:
+        # Use base href, will be updated by JavaScript for chip-specific URLs
+        base_href = launchpad_href or "https://espressif.github.io/esp-launchpad/"
         self.body.append(
-            f'<a class="wokwi-launchpad-btn" href="https://espressif.github.io/esp-launchpad/?flashConfigURL=https://raw.githubusercontent.com/espressif/esp-launchpad/24bb22db7e4d6b2182e054d2f482532511c60475/config/matter_config.toml" target="_blank" rel="noopener" title="Open in ESP Launchpad">'
+            f'<a class="wokwi-launchpad-btn" href="{_escape(base_href, True)}" '
+            f'data-base-href="{_escape(base_href, True)}" '
+            f'target="_blank" rel="noopener" title="Open in ESP Launchpad">'
             f'<img src="{_escape(launchpad_icon, True)}" alt="ESP Launchpad"/></a>'
         )
 
@@ -149,7 +199,7 @@ def _fallback_text(viewer_url: str) -> str:
 
 
 def visit_wokwi_text(self, node: WokwiNode):
-    viewer_url = build_viewer_url(node.get("viewer_base"), node.get("diagram"), node.get("firmware"))
+    viewer_url = iframe_url(node.get("iframe_page"), node.get("diagram"), node.get("firmware"))
     self.add_text(_fallback_text(viewer_url))
     raise _n.SkipNode
 
@@ -187,7 +237,7 @@ def depart_tabpanel_text(self, node: TabPanelNode):
 
 
 def visit_wokwi_latex(self, node: WokwiNode):
-    viewer_url = build_viewer_url(node.get("viewer_base"), node.get("diagram"), node.get("firmware"))
+    viewer_url = iframe_url(node.get("iframe_page"), node.get("diagram"), node.get("firmware"))
     self.body.append(r"\url{" + viewer_url + "}")
     raise _n.SkipNode
 

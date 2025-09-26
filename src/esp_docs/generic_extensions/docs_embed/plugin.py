@@ -4,9 +4,8 @@ from pathlib import Path
 
 # from .sphinx import helpers
 from .sphinx.nodes import WokwiNode, WokwiTabsNode, TabListNode, TabPanelNode
-from .sphinx.directives import WokwiDirective, WokwiTabsDirective
+from .sphinx.directives import WokwiDirective, WokwiTabsDirective, WokwiExampleDirective
 from .sphinx import html
-from .sphinx.wokwi_toml import WokwiTomlDirective
 from sphinx.application import Sphinx
 
 # __all__ = [
@@ -47,6 +46,10 @@ def setup(app: Sphinx) -> None:
         "https://raw.githubusercontent.com/espressif/esp-launchpad/24bb22db7e4d6b2182e054d2f482532511c60475/assets/esp_launchpad.svg",
         "env",
     )
+
+    # NEW: required for wokwi-example directive
+    app.add_config_value("docs_embed_root", None, "env")  # e.g. "../.."
+    app.add_config_value("docs_embed_store_prefix", None, "env")  # e.g. "https://esp.kubaandrysek.cz/storage/arduino/"
 
     # Nodes
     app.add_node(
@@ -93,7 +96,7 @@ def setup(app: Sphinx) -> None:
     # Directives
     app.add_directive("wokwi", WokwiDirective)
     app.add_directive("wokwi-tabs", WokwiTabsDirective)
-    app.add_directive("wokwi-toml", WokwiTomlDirective)  # NEW
+    app.add_directive("wokwi-example", WokwiExampleDirective)
 
     app.connect("builder-inited", _register_static)
 

@@ -41,35 +41,17 @@ For documentation about esp-docs please see https://github.com/espressif/esp-doc
 Wokwi embed example
 ===================
 
-.. wokwi-tabs::
 
-  .. code-block:: arduino
-    :name: Code2
 
-    #define LED    12
-    #define BUTTON 2
 
-    uint8_t stateLED = 0;
+.. wokwi-example:: libraries/ESP32/examples/GPIO/BlinkRGB
 
-      void setup() {
-          pinMode(LED, OUTPUT);
-          pinMode(BUTTON,INPUT_PULLUP);
-      }
 
-      void loop() {
 
-        if(!digitalRead(BUTTON)){
-          stateLED = stateLED^1;
-          digitalWrite(LED,stateLED);
-        }
-      }
+------
 
-  .. wokwi::
-    :name: ESP32
-    :diagram: https://it.kubaandrysek.cz/wokwi/gpio-basic-s3.json
-    :firmware: https://it.kubaandrysek.cz/wokwi/gpio-basic-s3.bin
+Separate
 
-  .. wokwi::
-    :name: ESP32-C3
-    :diagram: https://it.kubaandrysek.cz/wokwi/gpio-basic-s3.json
-    :firmware: https://it.kubaandrysek.cz/wokwi/gpio-basic-s3.bin
+.. wokwi::
+  :diagram: https://it.kubaandrysek.cz/wokwi/gpio-basic-s3.json
+  :firmware: https://it.kubaandrysek.cz/wokwi/gpio-basic-s3.bin

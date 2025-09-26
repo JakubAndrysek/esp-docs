@@ -109,4 +109,4 @@ class FileUploader:
         for src in files:
             dest_rel = f"{self.storage_url_prefix}/{src}"
             print(f"- Uploading {src.name} to {dest_rel}")
-            # self.upload_file_with_progress(src, dest_rel)
+            self.upload_file_with_progress(src, src)

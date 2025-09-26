@@ -21,7 +21,13 @@
 /* Our tablist — avoid sphinx-tabs global CSS */
 .wokwi-tabsbar .wokwi-tablist { border: 0 !important; }
 
-/* Badge for TOML variant */
+/* Badge container for example variant */
+.wokwi-badge-container {
+  width: 100%;
+  margin: .25rem 0;
+}
+
+/* Badge for TOML and example variants */
 .wokwi-badge {
   display: inline-block;
   font-size: .72rem;
@@ -34,6 +40,15 @@
   margin-right: .25rem;
 }
 
+/* Light gray container for chip tabs */
+.wokwi-chip-tabs-container {
+  background: #f8fafc;        /* slate-50 */
+  border: 1px solid #e2e8f0;  /* slate-200 */
+  border-radius: .375rem;
+  padding: .5rem;
+  margin: .25rem 0;
+}
+
 /* Tabs */
 .wokwi-tablist {
   display: flex;
@@ -42,6 +57,15 @@
   overflow-x: auto;
   scrollbar-width: thin;
   -webkit-overflow-scrolling: touch;
+}
+
+/* Chip-specific tablist */
+.wokwi-chip-tablist {
+  display: flex;
+  gap: .35rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: .25rem;
 }
 
 .wokwi-tab {
@@ -53,14 +77,50 @@
   white-space: nowrap;
   flex: 0 0 auto;
   border-radius: 9999px; /* pill by default */
+  transition: all 0.2s ease;
+}
+
+/* Source code tab styling */
+.wokwi-source-tab {
+  background: #f1f5f9;       /* slate-100 */
+  border-color: #cbd5e1;     /* slate-300 */
+  color: #475569;            /* slate-600 */
+}
+
+.wokwi-source-tab:hover {
+  background: #e2e8f0;       /* slate-200 */
+  border-color: #94a3b8;     /* slate-400 */
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+/* Chip tab styling */
+.wokwi-chip-tab {
+  background: #ffffff;
+  border-color: #d1d5db;     /* gray-300 */
+  color: #374151;            /* gray-700 */
+}
+
+.wokwi-chip-tab:hover {
+  background: #f9fafb;       /* gray-50 */
+  border-color: #9ca3af;     /* gray-400 */
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,.1);
 }
 
 /* Higher-contrast selected tab */
 .wokwi-tab[aria-selected="true"] {
-  background: #e2e8f0;       /* slate-200 */
-  border-color: #64748b;     /* slate-500 */
-  color: #0f172a;            /* slate-900 */
+  background: #3b82f6;       /* blue-500 */
+  border-color: #2563eb;     /* blue-600 */
+  color: #ffffff;
   font-weight: 700;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+}
+
+.wokwi-tab[aria-selected="true"]:hover {
+  background: #2563eb;       /* blue-600 */
+  border-color: #1d4ed8;     /* blue-700 */
 }
 
 /* TOML variant: subtle bubble background for all tabs */
@@ -96,9 +156,26 @@
 }
 
 /* Launchpad button (image) */
+.wokwi-launchpad-btn {
+  border-radius: .375rem;
+  padding: .35rem;
+  transition: all 0.2s ease;
+}
+
+.wokwi-launchpad-btn:hover {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
 .wokwi-launchpad-btn img {
   display: block;
   height: 24px;
+  transition: all 0.2s ease;
+}
+
+.wokwi-launchpad-btn:hover img {
+  transform: scale(1.05);
 }
 
 /* Panels — no padding/gap; trim bottom margin under code */
