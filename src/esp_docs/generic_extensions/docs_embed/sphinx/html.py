@@ -82,18 +82,16 @@ def visit_tablist_html(self, node: TabListNode):
     launchpad_href = node.get("launchpad_href")
     launchpad_icon = node.get("launchpad_icon")
 
+
     self.body.append('<div class="wokwi-tabsbar">')
-
-    # Container for chip tabs with light gray background
-    self.body.append('<div class="wokwi-chip-tabs-container">')
-
+    self.body.append('<div class="wokwi-chip-tabs-container wokwi-chip-tabs-single-frame">')
+    self.body.append('<div class="wokwi-tab-groups-row">')
     # Render code tabs first
     if tabs_code:
         self.body.append('<div class="wokwi-tab-group">')
         self.body.append('<div class="wokwi-tab-group-label">Code</div>')
         self.body.append('<div class="wokwi-tablist wokwi-code-tablist" data-wokwi="tablist">')
         for i, label in enumerate(tabs_code):
-            # Find corresponding panel_id
             panel_index = labels.index(label)
             pid = panel_ids[panel_index]
             selected = "true" if i == 0 else "false"
@@ -103,14 +101,12 @@ def visit_tablist_html(self, node: TabListNode):
             )
         self.body.append("</div>")  # code tablist
         self.body.append("</div>")  # tab group
-
     # Render wokwi tabs
     if tabs_wokwi:
         self.body.append('<div class="wokwi-tab-group">')
         self.body.append('<div class="wokwi-tab-group-label">Wokwi</div>')
         self.body.append('<div class="wokwi-tablist wokwi-wokwi-tablist" data-wokwi="tablist">')
         for i, label in enumerate(tabs_wokwi):
-            # Find corresponding panel_id
             panel_index = labels.index(label)
             pid = panel_ids[panel_index]
             selected = "true" if i == 0 and not tabs_code else "false"
@@ -120,7 +116,7 @@ def visit_tablist_html(self, node: TabListNode):
             )
         self.body.append("</div>")  # wokwi tablist
         self.body.append("</div>")  # tab group
-
+    self.body.append('</div>')  # wokwi-tab-groups-row
     self.body.append("</div>")  # wokwi-chip-tabs-container
 
     # Actions (right)

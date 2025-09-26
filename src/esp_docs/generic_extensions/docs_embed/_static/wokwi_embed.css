@@ -52,6 +52,25 @@
   flex-wrap: wrap;
 }
 
+/* Single frame for tab groups row */
+.wokwi-chip-tabs-single-frame {
+  background: #f8fafc;
+  border-radius: .375rem;
+  border: 1px solid #e2e8f0;
+  padding: .5rem;
+  margin: .25rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+
+.wokwi-tab-groups-row {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
 /* Tab group container */
 .wokwi-tab-group {
   display: flex;
