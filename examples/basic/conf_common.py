@@ -30,4 +30,4 @@ versions_url = './_static/docs_version.js'
 pdf_file_prefix = u'esp-docs'
 
 # Wokwi info URL
-wokwi_info_url = "https://docs.wokwi.com/"
+about_wokwi_url = "https://docs.wokwi.com/"

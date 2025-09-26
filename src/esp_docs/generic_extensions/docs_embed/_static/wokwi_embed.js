@@ -19,19 +19,9 @@
     var baseHref = launchpadBtn.getAttribute('data-base-href');
     if (!baseHref) return;
 
-    var chip = selectedBtn.getAttribute('data-chip');
-    if (chip) {
-      // Add chip parameter to launchpad URL
-      var separator = baseHref.includes('?') ? '&' : '?';
-      var newHref = baseHref + separator + 'chip=' + encodeURIComponent(chip);
-      launchpadBtn.setAttribute('href', newHref);
-    } else {
-      // Use base href for non-chip tabs (source code)
-      launchpadBtn.setAttribute('href', baseHref);
-    }
-  }
-
-  function onTabClick(e) {
+    // Use the base href as is - the flashConfigURL parameter is already included if needed
+    launchpadBtn.setAttribute('href', baseHref);
+  }  function onTabClick(e) {
     var btn = e.target.closest('.wokwi-tab');
     if (!btn) return;
     var root = btn.closest('.wokwi-tabs');

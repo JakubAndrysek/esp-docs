@@ -9,16 +9,17 @@ from .nodes import WokwiNode, WokwiTabsNode, TabListNode, TabPanelNode
 
 def _render_iframe_attrs(node: WokwiNode) -> tuple[str, str, str]:
     iframe_page = node.get("iframe_page")
+    iframe_page_params = node.get("iframe_page_params", {})
     diagram_path = node.get("diagram")
-    firmware = node.get("firmware")
+    firmware_path = node.get("firmware")
     width = node.get("width")
     height = node.get("height")
     loading = node.get("loading", "lazy")
     classes = " ".join(node.get("classes", []))
-    viewer_url = iframe_url(iframe_page, diagram_path, firmware)
+    viewer_url = iframe_url(iframe_page, diagram_path, firmware_path, iframe_page_params)
 
     attrs = {
-        "src": _escape(viewer_url, quote=True),
+        "src": viewer_url,
         "width": _escape(str(width), quote=True),
         "height": _escape(str(height), quote=True),
         "loading": _escape(str(loading), quote=True),
@@ -33,19 +34,21 @@ def _render_iframe_attrs(node: WokwiNode) -> tuple[str, str, str]:
 # --- Single Wokwi (keep header with info + fullscreen only) ---
 
 def visit_wokwi_html(self, node: WokwiNode):
+    attr_str, allow, _ = _render_iframe_attrs(node)
+    iframe = f"<iframe {attr_str}{allow}></iframe>"
+
     if node.get("suppress_header"):
-        attr_str, allow, _ = _render_iframe_attrs(node)
-        self.body.append(f"<iframe {attr_str}{allow}></iframe>")
+        self.body.append(iframe)
         raise _n.SkipNode
 
-    info_url = getattr(self.builder.app.config, "wokwi_info_url", None)
-    attr_str, allow, _viewer_url = _render_iframe_attrs(node)
+    about_wokwi_url = getattr(self.builder.app.config, "about_wokwi_url", None)
+    attr_str, allow, _ = _render_iframe_attrs(node)
 
     self.body.append('<div class="wokwi-frame">')
     self.body.append('<div class="wokwi-tabsbar"><div class="wokwi-actions">')
-    if info_url:
+    if about_wokwi_url:
         self.body.append(
-            f'<a class="wokwi-info-btn" href="{_escape(info_url, True)}" target="_blank" rel="noopener" title="About Wokwi">ⓘ</a>'
+            f'<a class="wokwi-info-btn" href="{_escape(about_wokwi_url, True)}" target="_blank" rel="noopener" title="About Wokwi">ⓘ</a>'
         )
     self.body.append('<a class="wokwi-fullscreen-btn" href="#" title="Fullscreen simulation">⛶</a>')
     self.body.append('</div></div>')
@@ -73,88 +76,44 @@ def depart_wokwi_tabs_html(self, node: WokwiTabsNode):
 def visit_tablist_html(self, node: TabListNode):
     labels = node.get("labels", [])
     panel_ids = node.get("panel_ids", [])
-    info_url = getattr(self.builder.app.config, "wokwi_info_url", None)
-    variant = node.get("variant")
+    about_wokwi_url = getattr(self.builder.app.config, "about_wokwi_url", None)
     launchpad_href = node.get("launchpad_href")
     launchpad_icon = node.get("launchpad_icon")
-    chip_info = node.get("chip_info", [])
 
     self.body.append('<div class="wokwi-tabsbar">')
 
-    # Badge above chip tabs (for example variants)
-    if variant == "example":
-        self.body.append('<div class="wokwi-badge-container">')
-        self.body.append('<span class="wokwi-badge">Wokwi simulation</span>')
-        self.body.append('</div>')
-    elif variant == "toml":
-        self.body.append('<span class="wokwi-badge">Wokwi simulation</span>')
-
     # Container for chip tabs with light gray background
-    if variant == "example":
-        self.body.append('<div class="wokwi-chip-tabs-container">')
+    self.body.append('<div class="wokwi-chip-tabs-container">')
+    self.body.append('<div class="wokwi-tablist wokwi-chip-tablist" data-wokwi="tablist">')
 
-    # IMPORTANT: avoid role="tablist" to keep sphinx-tabs CSS from styling us
-    tablist_class = "wokwi-tablist"
-    if variant == "example":
-        tablist_class += " wokwi-chip-tablist"
+    # Render all tabs
+    for i, (label, pid) in enumerate(zip(labels, panel_ids)):
+        selected = "true" if i == 0 else "false"
+        chip_class = "wokwi-tab"
 
-    self.body.append(f'<div class="{tablist_class}" data-wokwi="tablist">')
-
-    # Separate source code tab from chip tabs
-    source_tab_index = -1
-    for i, label in enumerate(labels):
         if label.endswith('.ino'):
-            source_tab_index = i
-            break
+            chip_class += " wokwi-source-tab"
+        else:
+            chip_class += " wokwi-chip-tab"
 
-    # Render source code tab first (if exists)
-    if source_tab_index >= 0:
-        label = labels[source_tab_index]
-        pid = panel_ids[source_tab_index]
-        selected = "true" if source_tab_index == 0 else "false"
         self.body.append(
-            f'<button class="wokwi-tab wokwi-source-tab" type="button" role="tab" '
+            f'<button class="{chip_class}" type="button" role="tab" '
             f'aria-selected="{selected}" data-target="{pid}">{_escape(label, True)}</button>'
         )
 
-    # Close source tabs container and start chip tabs
-    if variant == "example" and source_tab_index >= 0:
-        self.body.append("</div>")  # close first tablist
-        self.body.append('<div class="wokwi-chip-tablist" data-wokwi="tablist">')
-
-    # Render chip tabs
-    for i, (label, pid) in enumerate(zip(labels, panel_ids)):
-        if i == source_tab_index:
-            continue  # Skip source tab, already rendered
-
-        selected = "true" if i == 0 and source_tab_index < 0 else "false"
-        chip_class = "wokwi-tab wokwi-chip-tab"
-
-        # Add chip-specific data for launchpad URL
-        chip_data = ""
-        if i < len(chip_info):
-            chip_data = f' data-chip="{chip_info[i]}"'
-
-        self.body.append(
-            f'<button class="{chip_class}" type="button" role="tab" aria-selected="{selected}" data-target="{pid}"{chip_data}>{_escape(label, True)}</button>'
-        )
-
     self.body.append("</div>")  # tablist
-
-    if variant == "example":
-        self.body.append("</div>")  # wokwi-chip-tabs-container
+    self.body.append("</div>")  # wokwi-chip-tabs-container
 
     # Actions (right)
     self.body.append('<div class="wokwi-actions" data-wokwi-only="true">')
-    if info_url:
+    if about_wokwi_url:
         self.body.append(
-            f'<a class="wokwi-info-btn" href="{_escape(info_url, True)}" target="_blank" rel="noopener" title="About Wokwi">ⓘ</a>'
+            f'<a class="wokwi-info-btn" href="{_escape(about_wokwi_url, True)}" target="_blank" rel="noopener" title="About Wokwi">ⓘ</a>'
         )
     self.body.append('<a class="wokwi-fullscreen-btn" href="#" title="Fullscreen simulation">⛶</a>')
 
-    # Launchpad button (TOML and example variants; always show if we have icon)
-    if variant in ("toml", "example") and launchpad_icon:
-        # Use base href, will be updated by JavaScript for chip-specific URLs
+    # Launchpad button (always show if icon exists)
+    if launchpad_icon:
         base_href = launchpad_href or "https://espressif.github.io/esp-launchpad/"
         self.body.append(
             f'<a class="wokwi-launchpad-btn" href="{_escape(base_href, True)}" '
@@ -164,7 +123,6 @@ def visit_tablist_html(self, node: TabListNode):
         )
 
     self.body.append("</div>")  # actions
-
     self.body.append("</div>")  # tabsbar
     raise _n.SkipNode
 

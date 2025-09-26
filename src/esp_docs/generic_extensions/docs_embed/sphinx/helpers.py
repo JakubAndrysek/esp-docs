@@ -39,11 +39,13 @@ def slug_lower(name: str) -> str:
     return s
 
 
-def iframe_url(base: str, diagram: Optional[str], firmware: Optional[str]) -> str:
+def iframe_url(base: str, diagram: Optional[str], firmware: Optional[str], iframe_page_params: Optional[Dict[str, str]] = None) -> str:
     params: Dict[str, str] = {}
     if diagram:
         params["diagram"] = diagram
     if firmware:
         params["firmware"] = firmware
+    if iframe_page_params:
+        params.update(iframe_page_params)
     qs = urlencode(params, quote_via=quote, safe="")
     return base + (("?" + qs) if qs else "")

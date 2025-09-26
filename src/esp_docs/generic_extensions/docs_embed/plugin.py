@@ -2,9 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-# from .sphinx import helpers
 from .sphinx.nodes import WokwiNode, WokwiTabsNode, TabListNode, TabPanelNode
-from .sphinx.directives import WokwiDirective, WokwiTabsDirective, WokwiExampleDirective
+from .sphinx.directives import WokwiDirective, WokwiExampleDirective
 from .sphinx import html
 from sphinx.application import Sphinx
 
@@ -34,22 +33,15 @@ def setup(app: Sphinx) -> None:
     app.add_config_value("wokwi_default_height", "500px", "env")
     app.add_config_value("wokwi_default_allowfullscreen", True, "env")
     app.add_config_value("wokwi_default_loading", "lazy", "env")
-    app.add_config_value("wokwi_json_prefix", None, "env")
-    app.add_config_value("wokwi_info_url", None, "env")
-
-    # NEW: required for wokwi-toml (prefix for firmware binaries)
-    app.add_config_value("wokwi_download_server", None, "env")  # e.g. "https://esp.kubaandrysek.cz/arduino/"
-    # NEW: ESP Launchpad integration (button on the right)
-    app.add_config_value("wokwi_esp_launchpad_base", "https://espressif.github.io/esp-launchpad/", "env")
+    app.add_config_value("about_wokwi_url", None, "env")
+    app.add_config_value("wokwi_esp_launchpad_url", "https://espressif.github.io/esp-launchpad", "env")
     app.add_config_value(
         "wokwi_launchpad_icon_url",
         "https://raw.githubusercontent.com/espressif/esp-launchpad/24bb22db7e4d6b2182e054d2f482532511c60475/assets/esp_launchpad.svg",
         "env",
     )
-
-    # NEW: required for wokwi-example directive
     app.add_config_value("docs_embed_root", None, "env")  # e.g. "../.."
-    app.add_config_value("docs_embed_store_prefix", None, "env")  # e.g. "https://esp.kubaandrysek.cz/storage/arduino/"
+    app.add_config_value("docs_embed_store_prefix", None, "env")
 
     # Nodes
     app.add_node(
@@ -95,7 +87,6 @@ def setup(app: Sphinx) -> None:
 
     # Directives
     app.add_directive("wokwi", WokwiDirective)
-    app.add_directive("wokwi-tabs", WokwiTabsDirective)
     app.add_directive("wokwi-example", WokwiExampleDirective)
 
     app.connect("builder-inited", _register_static)
