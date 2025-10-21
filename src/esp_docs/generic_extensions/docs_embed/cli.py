@@ -3,10 +3,12 @@
 Diagram and CI synchronization script for ESP32 Arduino examples.
 """
 
-from pathlib import Path
 import sys
 import rich_click as click
-from esp_docs.generic_extensions.docs_embed.tool.wokwi_tool import DiagramSync, target_to_boards
+from esp_docs.generic_extensions.docs_embed.tool.wokwi_tool import (
+    DiagramSync,
+    target_to_boards,
+)
 
 
 # CLI Commands
@@ -53,7 +55,9 @@ def main(ctx: click.Context, path: str):
     help="Override existing files",
 )
 @click.pass_context
-def init_project(ctx: click.Context, platforms: str, diagram: bool, ci: bool, override: bool):
+def init_project(
+    ctx: click.Context, platforms: str, diagram: bool, ci: bool, override: bool
+):
     """Initialize project scaffolding and optional diagrams/ci.yml.
 
     Examples:
@@ -67,7 +71,10 @@ def init_project(ctx: click.Context, platforms: str, diagram: bool, ci: bool, ov
         allowed = target_to_boards.keys()
         invalid = [p for p in platforms_list if p not in allowed]
         if invalid:
-            click.echo(f"Invalid platform(s): {', '.join(invalid)}. Allowed: {', '.join(allowed)}", err=True)
+            click.echo(
+                f"Invalid platform(s): {', '.join(invalid)}. Allowed: {', '.join(allowed)}",
+                err=True,
+            )
             sys.exit(1)
 
         sync.init_project(platforms_list, diagram, ci, override)
@@ -147,9 +154,7 @@ def diagram_from_ci(ctx: click.Context, platform, override):
     help="Override existing files",
 )
 @click.pass_context
-def launchpad_config(
-    ctx: click.Context, storage_url_prefix, repo_url_prefix, override
-):
+def launchpad_config(ctx: click.Context, storage_url_prefix, repo_url_prefix, override):
     """Generate ESP LaunchPad config file with the specified firmware prefix.
 
     Examples:
@@ -159,13 +164,12 @@ def launchpad_config(
 
     try:
         click.echo("Generating ESP LaunchPad config...")
-        sync.generate_launchpad_config(
-            storage_url_prefix, repo_url_prefix, override
-        )
+        sync.generate_launchpad_config(storage_url_prefix, repo_url_prefix, override)
         click.echo("ESP LaunchPad config generation completed successfully!")
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
