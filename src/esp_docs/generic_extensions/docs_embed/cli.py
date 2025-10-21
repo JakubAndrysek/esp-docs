@@ -4,7 +4,7 @@ Diagram and CI synchronization script for ESP32 Arduino examples.
 """
 
 import sys
-import rich_click as click
+import click
 from esp_docs.generic_extensions.docs_embed.tool.wokwi_tool import (
     DiagramSync,
     target_to_boards,

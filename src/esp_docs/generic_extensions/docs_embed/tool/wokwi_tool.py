@@ -8,7 +8,7 @@ import yaml
 import sys
 from pathlib import Path
 from typing import Dict, List, Any, Optional
-import rich_click as click
+import click
 
 target_to_boards = {
     'esp32': 'board-esp32-devkit-c-v4',
