@@ -67,8 +67,8 @@ class WokwiExampleDirective(Directive):
     .. wokwi-example:: libraries/ESP32/examples/GPIO/BlinkRGB
 
     This directive:
-    1. Looks for ci.json in the specified path relative to docs_embed_root
-    2. Reads the targets from ci.json["upload-binary"]["targets"]
+    1. Looks for ci.yml in the specified path relative to docs_embed_root
+    2. Reads the targets from ci.yml["upload-binary"]["targets"]
     3. Creates tabs for each target (ESP32, ESP32-S2, etc.)
     4. Uses docs_embed_store_prefix + path + /.gen/ to build URLs for firmware and diagrams
     5. Optionally shows ESP Launchpad button if launchpad.toml exists
@@ -89,7 +89,7 @@ class WokwiExampleDirective(Directive):
     has_content = False
 
     def run(self):
-        import json
+        import yaml
         import os
         from urllib.parse import urljoin
 
@@ -121,25 +121,25 @@ class WokwiExampleDirective(Directive):
         if not docs_embed_store_prefix:
             raise self.error("wokwi-example: 'docs_embed_store_prefix' must be set in conf.py")
 
-        # Build path to ci.json
-        ci_json_path = os.path.join(env.srcdir, docs_embed_root, example_path, "ci.json")
+        # Build path to ci.yml
+        ci_yml_path = os.path.join(env.srcdir, docs_embed_root, example_path, "ci.yml")
 
-        if not os.path.isfile(ci_json_path):
-            raise self.error(f"wokwi-example: ci.json not found at {ci_json_path}")
+        if not os.path.isfile(ci_yml_path):
+            raise self.error(f"wokwi-example: ci.yml not found at {ci_yml_path}")
 
-        # Load ci.json
+        # Load ci.yml
         try:
-            with open(ci_json_path, "r") as f:
-                ci_data = json.load(f)
+            with open(ci_yml_path, "r") as f:
+                ci_data = yaml.safe_load(f)
         except Exception as e:
-            raise self.error(f"wokwi-example: failed to parse ci.json: {e}")
+            raise self.error(f"wokwi-example: failed to parse ci.yml: {e}")
 
         # Extract targets
         upload_binary = ci_data.get("upload-binary", {})
         targets = upload_binary.get("targets", [])
 
         if not targets:
-            raise self.error(f"wokwi-example: no targets found in ci.json at {ci_json_path}")
+            raise self.error(f"wokwi-example: no targets found in ci.yml at {ci_yml_path}")
 
         # Build base URL for generated files
         gen_base_url = _make_url(docs_embed_store_prefix, f"{example_path}/.gen/")
@@ -173,7 +173,6 @@ class WokwiExampleDirective(Directive):
 
             wn["tab_label"] = tab_label
             wn["suppress_header"] = True  # rendered inside tabs
-            wn["from_example"] = True
 
             wokwi_nodes.append(wn)
 
@@ -233,19 +232,16 @@ class WokwiExampleDirective(Directive):
         tablist["tabs_code"] = tabs_code
         tablist["tabs_wokwi"] = tabs_wokwi
 
-        # Separate root_ids
-        root_id_code = f"{root_id}-code" if tabs_code else None
-        root_id_wokwi = f"{root_id}-wokwi" if tabs_wokwi else None
-        tablist["root_id_code"] = root_id_code
-        tablist["root_id_wokwi"] = root_id_wokwi
-
         # Always add launchpad support
         launchpad_toml_path = os.path.join(env.srcdir, docs_embed_root, example_path, ".gen/launchpad.toml")
         has_launchpad = os.path.isfile(launchpad_toml_path)
 
         # Always show launchpad button
         launchpad_base_url = getattr(env.app.config, "wokwi_esp_launchpad_url", "https://espressif.github.io/esp-launchpad/")
-        tablist["launchpad_icon"] = getattr(env.app.config, "wokwi_launchpad_icon_url", "")
+        tablist["launchpad_icon"] = "_static/esp_launchpad.svg"
+        
+        # Add Wokwi icon
+        tablist["wokwi_icon"] = "_static/wokwi.svg"
 
         if has_launchpad:
             launchpad_toml_url = _make_url(gen_base_url, "launchpad.toml")

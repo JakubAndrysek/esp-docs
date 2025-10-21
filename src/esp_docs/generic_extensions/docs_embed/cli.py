@@ -6,7 +6,6 @@ Diagram and CI synchronization script for ESP32 Arduino examples.
 from pathlib import Path
 import sys
 import rich_click as click
-from esp_docs.generic_extensions.docs_embed.tool.file_upload import FileUploader
 from esp_docs.generic_extensions.docs_embed.tool.wokwi_tool import DiagramSync, target_to_boards
 
 
@@ -45,7 +44,7 @@ def main(ctx: click.Context, path: str):
     "--ci/--no-ci",
     type=bool,
     default=False,
-    help="Generate ci.json from diagrams after creating diagrams (default: false)",
+    help="Generate ci.yml from diagrams after creating diagrams (default: false)",
 )
 @click.option(
     "--override/--no-override",
@@ -55,7 +54,7 @@ def main(ctx: click.Context, path: str):
 )
 @click.pass_context
 def init_project(ctx: click.Context, platforms: str, diagram: bool, ci: bool, override: bool):
-    """Initialize project scaffolding and optional diagrams/ci.json.
+    """Initialize project scaffolding and optional diagrams/ci.yml.
 
     Examples:
       docs-embed --path folder/examples init-project --platforms esp32,esp32s2 --diagram --ci --override
@@ -73,7 +72,6 @@ def init_project(ctx: click.Context, platforms: str, diagram: bool, ci: bool, ov
 
         sync.init_project(platforms_list, diagram, ci, override)
     except Exception as e:
-        raise e
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -90,11 +88,11 @@ def init_project(ctx: click.Context, platforms: str, diagram: bool, ci: bool, ov
 )
 @click.pass_context
 def ci_from_diagram(ctx: click.Context, platform, override):
-    """Generate ci.json from diagram files."""
+    """Generate ci.yml from diagram files."""
     sync = DiagramSync(ctx.obj.get("path"))
 
     try:
-        click.echo("Generating ci.json from diagram files...")
+        click.echo("Generating ci.yml from diagram files...")
         sync.generate_ci_from_diagram(platform, override)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
@@ -113,11 +111,15 @@ def ci_from_diagram(ctx: click.Context, platform, override):
 )
 @click.pass_context
 def diagram_from_ci(ctx: click.Context, platform, override):
-    """Generate diagram files from ci.json + diagram-default.json."""
+    """Generate diagram files from ci.yml + diagram-default.json.
+
+    Examples:
+      docs-embed --path folder/examples diagram-from-ci --platform esp32 --override
+    """
     sync = DiagramSync(ctx.obj.get("path"))
 
     try:
-        click.echo("Generating diagram files from ci.json...")
+        click.echo("Generating diagram files from ci.yml...")
         sync.generate_diagram_from_ci(platform, override)
         click.echo("Diagram generation completed successfully!")
     except Exception as e:
@@ -148,7 +150,11 @@ def diagram_from_ci(ctx: click.Context, platform, override):
 def launchpad_config(
     ctx: click.Context, storage_url_prefix, repo_url_prefix, override
 ):
-    """Generate ESP LaunchPad config file with the specified firmware prefix."""
+    """Generate ESP LaunchPad config file with the specified firmware prefix.
+
+    Examples:
+        docs-embed --path folder/examples launchpad-config https://storage.url/prefix --repo-url-prefix https://repo.url/prefix --override
+    """
     sync = DiagramSync(ctx.obj.get("path"))
 
     try:
@@ -160,21 +166,6 @@ def launchpad_config(
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
-
-
-@main.command()
-@click.pass_context
-def upload_to_storage(ctx: click.Context):
-    """Upload generated firmware images to storage."""
-    try:
-        click.echo("Uploading firmware images to storage...")
-        fs = FileUploader(ctx.obj.get("path"))
-        fs.upload_generated_files()
-        click.echo("Firmware images uploaded successfully!")
-    except Exception as e:
-        click.echo(f"Error: {e}", err=True)
-        sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

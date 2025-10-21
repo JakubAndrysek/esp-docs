@@ -42,18 +42,32 @@ def visit_wokwi_html(self, node: WokwiNode):
         raise _n.SkipNode
 
     about_wokwi_url = getattr(self.builder.app.config, "about_wokwi_url", None)
-    attr_str, allow, _ = _render_iframe_attrs(node)
-
+    
     self.body.append('<div class="wokwi-frame">')
-    self.body.append('<div class="wokwi-tabsbar"><div class="wokwi-actions">')
+    self.body.append('<div class="wokwi-tabsbar">')
+    self.body.append('<div class="wokwi-groups-container">')
+    
+    # Single WOKWI SIMULATOR GROUP
+    self.body.append('<div class="wokwi-group wokwi-group-simulator">')
+    # Header with icon, label, and buttons
+    self.body.append('<div class="wokwi-group-header">')
+    self.body.append('<img src="_static/wokwi.svg" alt="Wokwi" class="wokwi-icon"/>')
+    self.body.append('<div class="wokwi-group-label">WOKWI SIMULATOR</div>')
+    # Add info and fullscreen buttons
+    self.body.append('<div class="wokwi-header-actions">')
     if about_wokwi_url:
         self.body.append(
             f'<a class="wokwi-info-btn" href="{_escape(about_wokwi_url, True)}" target="_blank" rel="noopener" title="About Wokwi">ⓘ</a>'
         )
     self.body.append('<a class="wokwi-fullscreen-btn" href="#" title="Fullscreen simulation">⛶</a>')
-    self.body.append('</div></div>')
+    self.body.append("</div>")  # header-actions
+    self.body.append("</div>")  # group header
+    self.body.append("</div>")  # simulator group
+    
+    self.body.append("</div>")  # wokwi-groups-container
+    self.body.append("</div>")  # tabsbar
     self.body.append(f"<iframe {attr_str}{allow}></iframe>")
-    self.body.append("</div>")
+    self.body.append("</div>")  # wokwi-frame
     raise _n.SkipNode
 
 
@@ -81,15 +95,15 @@ def visit_tablist_html(self, node: TabListNode):
     about_wokwi_url = getattr(self.builder.app.config, "about_wokwi_url", None)
     launchpad_href = node.get("launchpad_href")
     launchpad_icon = node.get("launchpad_icon")
-
+    wokwi_icon = node.get("wokwi_icon")
 
     self.body.append('<div class="wokwi-tabsbar">')
-    self.body.append('<div class="wokwi-chip-tabs-container wokwi-chip-tabs-single-frame">')
-    self.body.append('<div class="wokwi-tab-groups-row">')
-    # Render code tabs first
+    self.body.append('<div class="wokwi-groups-container">')
+    
+    # CODE GROUP - First bordered section
     if tabs_code:
-        self.body.append('<div class="wokwi-tab-group">')
-        self.body.append('<div class="wokwi-tab-group-label">Code</div>')
+        self.body.append('<div class="wokwi-group wokwi-group-code">')
+        self.body.append('<div class="wokwi-group-label">CODE</div>')
         self.body.append('<div class="wokwi-tablist wokwi-code-tablist" data-wokwi="tablist">')
         for i, label in enumerate(tabs_code):
             panel_index = labels.index(label)
@@ -100,11 +114,26 @@ def visit_tablist_html(self, node: TabListNode):
                 f'aria-selected="{selected}" data-target="{pid}">{_escape(label, True)}</button>'
             )
         self.body.append("</div>")  # code tablist
-        self.body.append("</div>")  # tab group
-    # Render wokwi tabs
+        self.body.append("</div>")  # code group
+    
+    # WOKWI SIMULATOR GROUP - Second bordered section
     if tabs_wokwi:
-        self.body.append('<div class="wokwi-tab-group">')
-        self.body.append('<div class="wokwi-tab-group-label">Wokwi</div>')
+        self.body.append('<div class="wokwi-group wokwi-group-simulator">')
+        # Header with icon, label, and buttons
+        self.body.append('<div class="wokwi-group-header">')
+        if wokwi_icon:
+            self.body.append(f'<img src="{_escape(wokwi_icon, True)}" alt="Wokwi" class="wokwi-icon"/>')
+        self.body.append('<div class="wokwi-group-label">WOKWI SIMULATOR</div>')
+        # Add info and fullscreen buttons
+        self.body.append('<div class="wokwi-header-actions">')
+        if about_wokwi_url:
+            self.body.append(
+                f'<a class="wokwi-info-btn" href="{_escape(about_wokwi_url, True)}" target="_blank" rel="noopener" title="About Wokwi">ⓘ</a>'
+            )
+        self.body.append('<a class="wokwi-fullscreen-btn" href="#" title="Fullscreen simulation" data-wokwi-only="true">⛶</a>')
+        self.body.append("</div>")  # header-actions
+        self.body.append("</div>")  # group header
+        # Simulator tabs
         self.body.append('<div class="wokwi-tablist wokwi-wokwi-tablist" data-wokwi="tablist">')
         for i, label in enumerate(tabs_wokwi):
             panel_index = labels.index(label)
@@ -115,29 +144,24 @@ def visit_tablist_html(self, node: TabListNode):
                 f'aria-selected="{selected}" data-target="{pid}">{_escape(label, True)}</button>'
             )
         self.body.append("</div>")  # wokwi tablist
-        self.body.append("</div>")  # tab group
-    self.body.append('</div>')  # wokwi-tab-groups-row
-    self.body.append("</div>")  # wokwi-chip-tabs-container
-
-    # Actions (right)
-    self.body.append('<div class="wokwi-actions" data-wokwi-only="true">')
-    if about_wokwi_url:
-        self.body.append(
-            f'<a class="wokwi-info-btn" href="{_escape(about_wokwi_url, True)}" target="_blank" rel="noopener" title="About Wokwi">ⓘ</a>'
-        )
-    self.body.append('<a class="wokwi-fullscreen-btn" href="#" title="Fullscreen simulation">⛶</a>')
-
-    # Launchpad button (always show if icon exists)
+        self.body.append("</div>")  # simulator group
+    
+    # LAUNCHPAD GROUP - Third bordered section
     if launchpad_icon:
         base_href = launchpad_href or "https://espressif.github.io/esp-launchpad/"
+        self.body.append('<div class="wokwi-group wokwi-group-launchpad">')
+        self.body.append('<div class="wokwi-group-label">launchpad</div>')
         self.body.append(
             f'<a class="wokwi-launchpad-btn" href="{_escape(base_href, True)}" '
             f'data-base-href="{_escape(base_href, True)}" '
-            f'target="_blank" rel="noopener" title="Open in ESP Launchpad">'
-            f'<img src="{_escape(launchpad_icon, True)}" alt="ESP Launchpad"/></a>'
+            f'target="_blank" rel="noopener" title="Flash your chip">'
+            f'<img src="{_escape(launchpad_icon, True)}" alt="ESP Launchpad" class="launchpad-icon"/>'
+            f'<span class="launchpad-text">Flash</span>'
+            f'</a>'
         )
-
-    self.body.append("</div>")  # actions
+        self.body.append("</div>")  # launchpad group
+    
+    self.body.append("</div>")  # wokwi-groups-container
     self.body.append("</div>")  # tabsbar
     raise _n.SkipNode
 

@@ -7,14 +7,6 @@ from .sphinx.directives import WokwiDirective, WokwiExampleDirective
 from .sphinx import html
 from sphinx.application import Sphinx
 
-# __all__ = [
-#     "WokwiNode",
-#     "WokwiTabsNode",
-#     "TabListNode",
-#     "TabPanelNode",
-#     "setup",
-# ]
-
 
 def _register_static(app: Sphinx) -> None:
     pkg_static = Path(__file__).parent / "_static"
@@ -35,11 +27,6 @@ def setup(app: Sphinx) -> None:
     app.add_config_value("wokwi_default_loading", "lazy", "env")
     app.add_config_value("about_wokwi_url", None, "env")
     app.add_config_value("wokwi_esp_launchpad_url", "https://espressif.github.io/esp-launchpad", "env")
-    app.add_config_value(
-        "wokwi_launchpad_icon_url",
-        "https://raw.githubusercontent.com/espressif/esp-launchpad/24bb22db7e4d6b2182e054d2f482532511c60475/assets/esp_launchpad.svg",
-        "env",
-    )
     app.add_config_value("docs_embed_root", None, "env")  # e.g. "../.."
     app.add_config_value("docs_embed_store_prefix", None, "env")
 
@@ -92,7 +79,7 @@ def setup(app: Sphinx) -> None:
     app.connect("builder-inited", _register_static)
 
     return {
-        "version": "0.6.0",
+        "version": "0.7.0",
         "parallel_read_safe": True,
         "parallel_write_safe": True,
     }

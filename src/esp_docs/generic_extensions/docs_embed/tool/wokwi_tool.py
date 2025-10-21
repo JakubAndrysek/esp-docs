@@ -4,14 +4,11 @@ Diagram and CI synchronization script for ESP32 Arduino examples.
 """
 
 import json
+import yaml
 import sys
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 import rich_click as click
-import requests
-import os
-
-from .file_upload import FileWithProgressAndHash
 
 target_to_boards = {
     'esp32': 'board-esp32-devkit-c-v4',
@@ -33,9 +30,6 @@ class DiagramSync:
             raise FileNotFoundError(f"Base path {self.base_path} does not exist")
         if not self.base_path.is_dir():
             raise NotADirectoryError(f"Base path {self.base_path} is not a directory")
-
-        self.gen_path = self.base_path / ".gen"
-        self.gen_path.mkdir(exist_ok=True)
 
         self.serial_connections = [
             ["esp:RX", "$serialMonitor:TX", "", []],
@@ -71,6 +65,34 @@ class DiagramSync:
             click.echo(f"Error: Invalid JSON in {file_path}: {e}", err=True)
             sys.exit(1)
 
+    def load_yaml(self, file_path: Path) -> Dict[str, Any]:
+        """Load YAML file safely with error handling."""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return yaml.safe_load(f)
+        except FileNotFoundError:
+            click.echo(f"Error: File {file_path} not found", err=True)
+            sys.exit(1)
+        except yaml.YAMLError as e:
+            click.echo(f"Error: Invalid YAML in {file_path}: {e}", err=True)
+            sys.exit(1)
+
+    def save_yaml(self, file_path: Path, data: Dict[str, Any], override: bool = False) -> None:
+        """Save YAML file with proper formatting."""
+        if file_path.exists() and not override:
+            click.echo(f"Warning: {file_path} already exists. Use --override to overwrite.")
+            return
+
+        file_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        except Exception as e:
+            click.echo(f"Error: Failed to write YAML to {file_path}: {e}", err=True)
+            sys.exit(1)
+
+        click.echo(f"Saved: {file_path}")
+
     def save_json(self, file_path: Path, data: Dict[str, Any], override: bool = False) -> None:
         """Save JSON file with compact formatting."""
         if file_path.exists() and not override:
@@ -105,18 +127,18 @@ class DiagramSync:
         return [conn for conn in connections if not self.is_serial_connection(conn)]
 
     def get_platforms_from_ci(self) -> List[str]:
-        """Get all platforms from ci.json targets."""
-        ci_file = self.base_path / "ci.json"
+        """Get all platforms from ci.yml targets."""
+        ci_file = self.base_path / "ci.yml"
         if not ci_file.exists():
             return []
 
-        ci_data = self.load_json(ci_file)
+        ci_data = self.load_yaml(ci_file)
         return ci_data.get("upload-binary", {}).get("targets", [])
 
     def get_platforms_from_diagrams(self) -> List[str]:
         """Get all platforms from existing diagram files."""
         platforms = []
-        for file_path in self.gen_path.glob("diagram.*.json"):
+        for file_path in self.base_path.glob("diagram.*.json"):
             if file_path.name.startswith("diagram.") and file_path.name.endswith(".json"):
                 platform = file_path.name.replace("diagram.", "").replace(".json", "")
                 if platform != "default":
@@ -165,20 +187,20 @@ class DiagramSync:
 
     # Main Generation Methods
     def generate_ci_from_diagram(self, platform: Optional[str] = None, override: bool = False) -> None:
-        """Generate ci.json from diagram files."""
+        """Generate ci.yml from diagram files."""
         platforms = [platform] if platform else self.get_platforms_from_diagrams()
 
         if not platforms:
             click.echo("No diagram files found to process")
             return
 
-        # Load existing ci.json if it exists
-        ci_file = self.base_path / "ci.json"
+        # Load existing ci.yml if it exists
+        ci_file = self.base_path / "ci.yml"
         ci_data = {}
         if ci_file.exists():
-            ci_data = self.load_json(ci_file)
+            ci_data = self.load_yaml(ci_file)
             if ci_data.get("upload-binary") and not override:
-                click.echo("ci.json already has 'upload-binary' section. Use --override to overwrite.")
+                click.echo("ci.yml already has 'upload-binary' section. Use --override to overwrite.")
 
         # Ensure upload-binary structure exists in ci_data
         if "upload-binary" not in ci_data:
@@ -194,7 +216,7 @@ class DiagramSync:
             if plat not in upload_binary["targets"]:
                 upload_binary["targets"].append(plat)
 
-            diagram_file = self.gen_path / f"diagram.{plat}.json"
+            diagram_file = self.base_path / f"diagram.{plat}.json"
             if not diagram_file.exists():
                 click.echo(f"- {plat}: Warning: diagram.{plat}.json not found, skipping")
                 continue
@@ -227,30 +249,30 @@ class DiagramSync:
 
         # Ensure the modified upload_binary is saved back to ci_data
         ci_data["upload-binary"] = upload_binary
-        self.save_json(ci_file, ci_data, True)
+        self.save_yaml(ci_file, ci_data, True)
 
     def generate_diagram_from_ci(self, platform: Optional[str] = None, override: bool = False) -> None:
-        """Generate diagram files from ci.json + diagram-default.json."""
+        """Generate diagram files from ci.yml + diagram-default.json."""
         platforms = [platform] if platform else self.get_platforms_from_ci()
 
         if not platforms:
-            click.echo("No platforms found in ci.json")
+            click.echo("No platforms found in ci.yml")
             return
 
-        # Load ci.json
-        ci_file = self.base_path / "ci.json"
+        # Load ci.yml
+        ci_file = self.base_path / "ci.yml"
         if not ci_file.exists():
-            click.echo("Error: ci.json not found", err=True)
+            click.echo("Error: ci.yml not found", err=True)
             return
 
-        ci_data = self.load_json(ci_file)
+        ci_data = self.load_yaml(ci_file)
 
         # Process each platform
         for plat in platforms:
             self.generate_diagram(plat, override, ci_data.get("upload-binary", {}))
 
     def generate_diagram(self, platform: str, override: bool = False, config_data: Optional[Dict[str, Any]] = {}) -> None:
-        diagram_file = self.gen_path / f"diagram.{platform}.json"
+        diagram_file = self.base_path / f"diagram.{platform}.json"
 
         # Check if file exists and we're not overriding
         if diagram_file.exists() and not override:
@@ -278,27 +300,27 @@ class DiagramSync:
         self.save_json(diagram_file, diagram_data, True)
 
     def generate_launchpad_config(self, storage_url_prefix: str, repo_url_prefix: str, override: bool = False) -> None:
-        """Generate ESP LaunchPad config file from ci.json targets."""
+        """Generate ESP LaunchPad config file from ci.yml targets."""
         project_name = self.base_path.name
         storage_url_prefix = storage_url_prefix.rstrip('/')
         repo_url_prefix = repo_url_prefix.rstrip('/')
 
-        config_file = self.gen_path / "launchpad.toml"
+        config_file = self.base_path / "launchpad.toml"
         if config_file.exists() and not override:
             click.echo(f"Warning: {config_file} already exists. Use --override to overwrite.")
             return
 
-        # Load ci.json to get platforms
-        ci_file = self.base_path / "ci.json"
+        # Load ci.yml to get platforms
+        ci_file = self.base_path / "ci.yml"
         if not ci_file.exists():
-            click.echo("Error: ci.json not found", err=True)
+            click.echo("Error: ci.yml not found", err=True)
             return
 
-        ci_data = self.load_json(ci_file)
+        ci_data = self.load_yaml(ci_file)
         platforms = ci_data.get("upload-binary", {}).get("targets", [])
 
         if not platforms:
-            click.echo("No platforms found in ci.json")
+            click.echo("No platforms found in ci.yml")
             return
 
         # Convert platforms to chipsets
@@ -332,10 +354,10 @@ class DiagramSync:
             binary_name = f"{project_name}-{lowercase_chipset}.bin"
             config_lines.append(f'image.{lowercase_chipset} = "{binary_name}"')
 
-        # Extract description from ci.json if available
+        # Extract description from ci.yml if available
         description = ci_data.get("upload-binary", {}).get("description")
         if description:
-            click.echo(f"- Found description in ci.json: {description}")
+            click.echo(f"- Found description in ci.yml: {description}")
             config_lines.extend([f'description = "{description}"',])
 
         with open(config_file, 'w', encoding='utf-8') as f:
