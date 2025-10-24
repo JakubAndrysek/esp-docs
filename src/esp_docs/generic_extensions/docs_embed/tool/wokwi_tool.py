@@ -299,13 +299,13 @@ class DiagramSync:
 
         self.save_json(diagram_file, diagram_data, True)
 
-    def generate_launchpad_config(self, storage_url_prefix: str, repo_url_prefix: str, override: bool = False) -> None:
+    def generate_launchpad_config(self, storage_url_prefix: str, repo_url_prefix: str, override: bool = False, output_dir: Optional[Path] = None) -> None:
         """Generate ESP LaunchPad config file from ci.yml targets."""
         project_name = self.base_path.name
         storage_url_prefix = storage_url_prefix.rstrip('/')
         repo_url_prefix = repo_url_prefix.rstrip('/')
 
-        config_file = self.base_path / "launchpad.toml"
+        config_file = (output_dir / "launchpad.toml") if output_dir else (self.base_path / "launchpad.toml")
         if config_file.exists() and not override:
             click.echo(f"Warning: {config_file} already exists. Use --override to overwrite.")
             return
