@@ -31,3 +31,5 @@ pdf_file_prefix = u'esp-docs'
 
 # Wokwi info URL
 about_wokwi_url = "https://docs.wokwi.com/"
+
+docs_embed_skip_validation = True

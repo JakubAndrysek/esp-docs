@@ -25,5 +25,3 @@ pdf_title = u'ESP-Docs Example Guide'
 language = 'en'
 
 docs_embed_root = '../../..'
-# docs_embed_store_prefix = 'https://esp.kubaandrysek.cz/storage/arduino/'
-docs_embed_store_prefix = 'https://raw.githubusercontent.com/JakubAndrysek/esp-launchpad-serve/refs/heads/main/arduino/'

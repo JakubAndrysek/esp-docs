@@ -9,7 +9,6 @@ __all__ = [
     "_escape",
     "css_size",
     "loading_choice",
-    "slug_lower",
     "iframe_url",
 ]
 
@@ -32,19 +31,13 @@ def loading_choice(arg: str) -> str:
     return v
 
 
-def slug_lower(name: str) -> str:
-    s = re.sub(r"\s+", "-", name.strip().lower())
-    s = re.sub(r"[^a-z0-9\-]", "-", s)
-    s = re.sub(r"-{2,}", "-", s).strip("-")
-    return s
 
 
-def iframe_url(base: str, diagram: Optional[str], firmware: Optional[str], iframe_page_params: Optional[Dict[str, str]] = None) -> str:
-    params: Dict[str, str] = {}
-    if diagram:
-        params["diagram"] = diagram
-    if firmware:
-        params["firmware"] = firmware
+def iframe_url(base: str, diagram_url: str, firmware_url: str, iframe_page_params: Optional[Dict[str, str]] = None) -> str:
+    params: Dict[str, str] = {
+        "diagram": diagram_url,
+        "firmware": firmware_url,
+    }
     if iframe_page_params:
         params.update(iframe_page_params)
     qs = urlencode(params, quote_via=quote, safe="")

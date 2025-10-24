@@ -20,15 +20,17 @@ def _register_static(app: Sphinx) -> None:
 
 def setup(app: Sphinx) -> None:
     # Config defaults (project can override in conf.py)
-    app.add_config_value("wokwi_viewer_url", "https://wokwi.com/experimental/viewer", "env")
+    app.add_config_value("docs_embed_wokwi_viewer_url", "https://wokwi.com/experimental/viewer", "env")
     app.add_config_value("wokwi_default_width", "100%", "env")
     app.add_config_value("wokwi_default_height", "500px", "env")
     app.add_config_value("wokwi_default_allowfullscreen", True, "env")
     app.add_config_value("wokwi_default_loading", "lazy", "env")
     app.add_config_value("about_wokwi_url", None, "env")
     app.add_config_value("wokwi_esp_launchpad_url", "https://espressif.github.io/esp-launchpad", "env")
-    app.add_config_value("docs_embed_root", None, "env")  # e.g. "../.."
-    app.add_config_value("docs_embed_store_prefix", None, "env")
+    app.add_config_value("docs_embed_esp32_relative_root", None, "env")  # e.g. "../.."
+    app.add_config_value("docs_embed_github_base_url", "https://github.com/espressif/arduino-esp32", "env")
+    app.add_config_value("docs_embed_github_branch", "master", "env")  # GitHub branch for source links
+    app.add_config_value("docs_embed_public_root", "https://docs.espressif.com/projects/arduino-esp32/en/latest/", "env")
 
     # Nodes
     app.add_node(

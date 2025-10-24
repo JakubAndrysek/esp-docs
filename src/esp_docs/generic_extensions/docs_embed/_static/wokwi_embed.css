@@ -85,6 +85,30 @@
   flex: 1;
 }
 
+/* Source code link */
+.wokwi-source-link {
+  margin-bottom: .25rem;
+}
+
+.wokwi-source-link-btn {
+  display: inline-block;
+  font-size: .75rem;
+  font-weight: 500;
+  color: #3b82f6;            /* blue-500 */
+  text-decoration: none;
+  padding: .2rem .4rem;
+  border: 1px solid #3b82f6;
+  border-radius: .25rem;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.wokwi-source-link-btn:hover {
+  background: #3b82f6;
+  color: #ffffff;
+  text-decoration: none;
+}
+
 /* Header actions (info + fullscreen in simulator header) */
 .wokwi-header-actions {
   display: flex;
@@ -238,9 +262,9 @@
 }
 
 /* Panels */
-.wokwi-panel { 
-  display: none; 
-  padding: 0; 
+.wokwi-panel {
+  display: none;
+  padding: 0;
   margin: 0;
   padding-top: .5rem;
 }
@@ -262,30 +286,30 @@
   .wokwi-tabs {
     padding: .65rem;
   }
-  
+
   .wokwi-groups-container {
     flex-direction: column;
     gap: .5rem;
   }
-  
+
   .wokwi-group {
     width: 100%;
     min-width: unset;
   }
-  
+
   .wokwi-group-launchpad {
     min-width: unset;
   }
-  
+
   .wokwi-group-label {
     font-size: .5rem;
   }
-  
+
   .wokwi-icon {
     height: 18px;
     width: 18px;
   }
-  
+
   .wokwi-panel {
     padding-top: .65rem;
   }
@@ -295,51 +319,51 @@
   .wokwi-tabs {
     padding: .5rem;
   }
-  
+
   .wokwi-groups-container {
     gap: .5rem;
   }
-  
+
   .wokwi-group {
     padding: .5rem;
   }
-  
-  .wokwi-tab { 
-    font-size: .75rem; 
-    padding: .3rem .55rem; 
+
+  .wokwi-tab {
+    font-size: .75rem;
+    padding: .3rem .55rem;
   }
-  
+
   .wokwi-group-label {
     font-size: .6rem;
   }
-  
+
   .wokwi-icon {
     height: 16px;
     width: 16px;
   }
-  
+
   .wokwi-panel {
     padding-top: .5rem;
   }
-  
-  .wokwi-panel iframe { 
-    height: 360px !important; 
+
+  .wokwi-panel iframe {
+    height: 360px !important;
   }
-  
+
   .wokwi-info-btn,
   .wokwi-fullscreen-btn {
     padding: .2rem .3rem;
     font-size: .7rem;
   }
-  
+
   .wokwi-launchpad-btn {
     padding: .45rem .7rem;
   }
-  
+
   .wokwi-launchpad-btn .launchpad-icon {
     height: 16px;
   }
-  
+
   .wokwi-launchpad-btn .launchpad-text {
     font-size: .75rem;
   }

@@ -44,7 +44,7 @@ Wokwi embed example
 
 
 
-.. wokwi-example:: libraries/ESP32/examples/GPIO/BlinkRGB
+.. wokwi-example:: libraries/ESP32/examples/GPIO/Blink
 
 
 

@@ -1,12 +1,28 @@
 from __future__ import annotations
 
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
-
-from .helpers import css_size, loading_choice, slug_lower
+from .helpers import css_size, loading_choice
 from .nodes import WokwiNode, WokwiTabsNode, TabListNode, TabPanelNode
+from os import path
+
+
+def _get_static_path(self) -> str:
+    """Calculate relative path to _static directory from current document."""
+    try:
+        # Get current document name (e.g., "api/gpio")
+        docname = self.state.document.settings.env.docname
+        if docname:
+            # Count directory levels to go up
+            levels_up = len(docname.split("/")) - 1
+            if levels_up > 0:
+                return "../" * levels_up + "_static/"
+        return "_static/"
+    except Exception:
+        # Fallback to relative path
+        return "_static/"
 
 
 class WokwiDirective(Directive):
@@ -32,15 +48,15 @@ class WokwiDirective(Directive):
         env = self.state.document.settings.env
         cfg = env.app.config
 
-        diagram = self.options.get("diagram")
-        firmware = self.options.get("firmware")
-        if not firmware:
-            raise self.error("wokwi directive: :firmware: is required (UF2/bin).")
+        diagram_url = self.options.get("diagram")
+        firmware_url = self.options.get("firmware")
+        if not diagram_url or not firmware_url:
+            raise self.error("wokwi directive: :diagram: and :firmware: are required (UF2/bin).")
 
         node = WokwiNode()
-        node["iframe_page"] = cfg.wokwi_viewer_url
-        node["diagram"] = diagram
-        node["firmware"] = firmware
+        node["iframe_page"] = cfg.docs_embed_wokwi_viewer_url
+        node["diagram"] = diagram_url
+        node["firmware"] = firmware_url
         node["width"] = self.options.get("width", cfg.wokwi_default_width)
         node["height"] = self.options.get("height", cfg.wokwi_default_height)
         node["title"] = self.options.get("title", "Wokwi simulation")
@@ -62,17 +78,46 @@ class WokwiDirective(Directive):
 
 class WokwiExampleDirective(Directive):
     """
-    Usage:
+    Directive to embed Wokwi simulations for Arduino ESP32 examples with multiple targets.
 
-    .. wokwi-example:: libraries/ESP32/examples/GPIO/BlinkRGB
+    Usage:
+        .. wokwi-example:: libraries/ESP32/examples/GPIO/Blink
+
+    Expected Directory Structure:
+        _static/
+        └── libraries/ESP32/examples/GPIO/Blink/
+            ├── launchpad.toml
+            ├── esp32/
+            │   ├── Blink.ino.merged.bin
+            │   └── diagram.esp32.json
+            └── esp32s2/
+                ├── Blink.ino.merged.bin
+                └── diagram.esp32s2.json
+
+
+        Arduino Source Files:
+        libraries/
+        └── ESP32/examples/GPIO/Blink/
+            └── Blink.ino
+            └── ci.yml
+
+                # debug information removed; keep logic minimal
+        docs_embed_github_base_url = "https://github.com/espressif/arduino-esp32"
+        docs_embed_github_branch = "master"
+        docs_embed_launchpad_url = "https://espressif.github.io/esp-launchpad/"
+
+    URL Generation:
+        - Firmware: _static/{example_path}/{target}/{sketch_name}.ino.merged.bin
+        - Diagram: _static/{example_path}/diagram.{target}.json
+        - Launchpad: _static/{example_path}/launchpad.toml
 
     This directive:
-    1. Looks for ci.yml in the specified path relative to docs_embed_root
-    2. Reads the targets from ci.yml["upload-binary"]["targets"]
-    3. Creates tabs for each target (ESP32, ESP32-S2, etc.)
-    4. Uses docs_embed_store_prefix + path + /.gen/ to build URLs for firmware and diagrams
-    5. Optionally shows ESP Launchpad button if launchpad.toml exists
-    6. Adds a link to the source code on GitHub if the example is from arduino-esp32 repo
+    1. Reads ci.yml from the Arduino example directory to get targets
+    2. Creates tabs for each target (ESP32, ESP32-S2, etc.)
+    3. Generates URLs for firmware binaries and Wokwi diagrams in _static/
+    4. Optionally shows ESP Launchpad button if launchpad.toml exists
+    5. Shows source code tab with the .ino file content + link to source
+    6. Validates file existence unless docs_embed_skip_validation is True
     """
     required_arguments = 1  # path to example directory
     optional_arguments = 0
@@ -90,41 +135,30 @@ class WokwiExampleDirective(Directive):
 
     def run(self):
         import yaml
-        import os
         from urllib.parse import urljoin
-
-        def _make_url(prefix: Optional[str], path: Optional[str]) -> Optional[str]:
-            """Helper to build full URL from prefix and path."""
-            if not path:
-                return None
-            if path.startswith(("http://", "https://")):
-                return path
-            if not prefix:
-                return None
-            # Ensure trailing slash on prefix
-            if not prefix.endswith("/"):
-                prefix = prefix + "/"
-            return urljoin(prefix, path.lstrip("/"))
 
         env = self.state.document.settings.env
         app = env.app
         cfg = app.config
 
+        # Example: libraries/ESP32/examples/GPIO/Blink -> sketch name: Blink
         example_path = self.arguments[0].strip()
+        sketch_name = example_path.split("/")[-1]
 
-        # Get configuration values
-        docs_embed_root = getattr(cfg, "docs_embed_root", None)
-        docs_embed_store_prefix = getattr(cfg, "docs_embed_store_prefix", None)
+        # Configuration values from conf.py
+        docs_embed_esp32_relative_root = getattr(cfg, "docs_embed_esp32_relative_root", None)
+        if not docs_embed_esp32_relative_root:
+            raise self.error("wokwi-example: 'docs_embed_esp32_relative_root' must be set in conf.py")
 
-        if not docs_embed_root:
-            raise self.error("wokwi-example: 'docs_embed_root' must be set in conf.py")
-        if not docs_embed_store_prefix:
-            raise self.error("wokwi-example: 'docs_embed_store_prefix' must be set in conf.py")
+        docs_embed_public_root = getattr(cfg, "docs_embed_public_root", None)
+        if not docs_embed_public_root:
+            raise self.error("wokwi-example: 'docs_embed_public_root' must be set in conf.py")
+
+        static_base_url = "_static/binaries/"
 
         # Build path to ci.yml
-        ci_yml_path = os.path.join(env.srcdir, docs_embed_root, example_path, "ci.yml")
-
-        if not os.path.isfile(ci_yml_path):
+        ci_yml_path = path.join(env.srcdir, docs_embed_esp32_relative_root, example_path, "ci.yml")
+        if not path.isfile(ci_yml_path):
             raise self.error(f"wokwi-example: ci.yml not found at {ci_yml_path}")
 
         # Load ci.yml
@@ -141,73 +175,82 @@ class WokwiExampleDirective(Directive):
         if not targets:
             raise self.error(f"wokwi-example: no targets found in ci.yml at {ci_yml_path}")
 
-        # Build base URL for generated files
-        gen_base_url = _make_url(docs_embed_store_prefix, f"{example_path}/.gen/")
-
-        # Find the .ino file in the example directory
-        example_full_path = os.path.join(env.srcdir, docs_embed_root, example_path)
-        ino_files = [f for f in os.listdir(example_full_path) if f.endswith('.ino')]
+        # Get configuration
+        skip_validation = getattr(cfg, "docs_embed_skip_validation", False)
 
         # Create WokwiNode instances for each target
         wokwi_nodes: List[WokwiNode] = []
-
         for target in targets:
-            # Create tab label (ESP32, ESP32-S2, etc.)
-            tab_label = target.upper().replace("ESP", "ESP")
+            firmware_path = f"{static_base_url}{example_path}/{target}/{sketch_name}.ino.merged.bin"
+            firmware_url = urljoin(docs_embed_public_root, firmware_path)
 
-            # Build firmware and diagram URLs
-            firmware_url = _make_url(gen_base_url, f"{target}.bin")
-            diagram_url = _make_url(gen_base_url, f"diagram.{target}.json")
+            diagram_path = f"{static_base_url}{example_path}/{target}/diagram.{target}.json"
+            diagram_url = urljoin(docs_embed_public_root, diagram_path)
+
+            # Validate files exist (unless skip_validation is set)
+            if not skip_validation:
+                firmware_full_path = path.join(env.srcdir, "..", firmware_path)
+                if not path.isfile(firmware_full_path):
+                    raise self.error(
+                        f"wokwi-example: firmware file not found at {firmware_full_path}. "
+                        f"Set 'docs_embed_skip_validation = True' in conf.py to bypass this check.")
+
+                diagram_full_path = path.join(env.srcdir, "..", diagram_path)
+                if not path.isfile(diagram_full_path):
+                    raise self.error(
+                        f"wokwi-example: diagram file not found at {diagram_full_path}. "
+                        f"Set 'docs_embed_skip_validation = True' in conf.py to bypass this check.")
+
+            # Create tab label (e.g., "ESP32", "ESP32-S2")
+            if target.startswith('esp32'):
+                base = target[5:]
+                tab_label = f"ESP32-{base.upper()}" if base else "ESP32"
+            else:
+                tab_label = target.upper()
 
             # Create WokwiNode
             wn = WokwiNode()
-            wn["iframe_page"] = cfg.wokwi_viewer_url
-            wn["diagram"] = diagram_url
-            wn["firmware"] = firmware_url
+            wn["iframe_page"] = cfg.docs_embed_wokwi_viewer_url
+            wn["diagram_url"] = diagram_url
+            wn["firmware_url"] = firmware_url
             wn["width"] = self.options.get("width", getattr(cfg, "wokwi_default_width", "100%"))
             wn["height"] = self.options.get("height", getattr(cfg, "wokwi_default_height", "500px"))
             wn["title"] = f"Wokwi simulation — {tab_label}"
             wn["allowfullscreen"] = getattr(cfg, "wokwi_default_allowfullscreen", True) if "allowfullscreen" not in self.options else True
             wn["loading"] = self.options.get("loading", getattr(cfg, "wokwi_default_loading", "lazy"))
             wn["classes"] = ["wokwi-embed", "from-example"] + self.options.get("class", [])
+            wn["static_path"] = _get_static_path(self)
 
             wn["tab_label"] = tab_label
             wn["suppress_header"] = True  # rendered inside tabs
 
             wokwi_nodes.append(wn)
 
-        # Now create the tab structure similar to WokwiTabsDirective
+        # Now create the tab structure
         code_panels: List[TabPanelNode] = []
         wokwi_panels: List[TabPanelNode] = []
 
-        # Add source code tab first if .ino file exists
-        if ino_files:
-            ino_filename = ino_files[0]  # Use the first .ino file found
+        ino_filename = f"{sketch_name}.ino"
+        ino_full_path = path.join(env.srcdir, docs_embed_esp32_relative_root, example_path, ino_filename)
+        if path.isfile(ino_full_path):
+            with open(ino_full_path, 'r', encoding='utf-8') as f:
+                source_content = f.read()
 
-            # Create a literal_block node with the file content
-            try:
-                ino_full_path = os.path.join(env.srcdir, docs_embed_root, example_path, ino_filename)
-                with open(ino_full_path, 'r', encoding='utf-8') as f:
-                    source_content = f.read()
+            code_block = nodes.literal_block(source_content, source_content)
+            code_block['language'] = 'arduino'
+            code_block['classes'] = ['highlight']
 
-                code_block = nodes.literal_block(source_content, source_content)
-                code_block['language'] = 'arduino'
-                code_block['classes'] = ['highlight']
-
-                # Create source code panel
-                source_panel = TabPanelNode()
-                source_panel["label"] = ino_filename
-                source_panel["active"] = True  # Source code tab is active by default
-                source_panel.children = [code_block]
-                code_panels.append(source_panel)
-            except Exception:
-                # If we can't read the file, skip the source code tab
-                pass
+            # Create source code panel
+            source_panel = TabPanelNode()
+            source_panel["label"] = ino_filename
+            source_panel["active"] = True  # Source code tab is active by default
+            source_panel.children = [code_block]
+            code_panels.append(source_panel)
 
         for i, wn in enumerate(wokwi_nodes):
             panel = TabPanelNode()
             panel["label"] = wn["tab_label"]
-            panel["active"] = (i == 0 and not ino_files)  # First wokwi tab is active only if no source code tab
+            panel["active"] = False
             panel.children = [wn]
             wokwi_panels.append(panel)
 
@@ -215,7 +258,6 @@ class WokwiExampleDirective(Directive):
         panels = code_panels + wokwi_panels
 
         # Create tabs structure
-        env = getattr(self.state.document.settings, "env", None)
         serial = env.new_serialno("wokwi-tabs") if env and hasattr(env, "new_serialno") else id(self)
         root_id = f"wokwi-tabs-{serial}"
 
@@ -227,30 +269,26 @@ class WokwiExampleDirective(Directive):
         tablist["panel_ids"] = panel_ids
 
         # Separate labels for code and wokwi
-        tabs_code = [p.get("label") for p in code_panels]
-        tabs_wokwi = [p.get("label") for p in wokwi_panels]
-        tablist["tabs_code"] = tabs_code
-        tablist["tabs_wokwi"] = tabs_wokwi
+        tablist["tabs_code"] = [p.get("label") for p in code_panels]
+        tablist["tabs_wokwi"] = [p.get("label") for p in wokwi_panels]
 
-        # Always add launchpad support
-        launchpad_toml_path = os.path.join(env.srcdir, docs_embed_root, example_path, ".gen/launchpad.toml")
-        has_launchpad = os.path.isfile(launchpad_toml_path)
+        tablist["static_path"] = _get_static_path(self)
 
-        # Always show launchpad button
-        launchpad_base_url = getattr(env.app.config, "wokwi_esp_launchpad_url", "https://espressif.github.io/esp-launchpad/")
-        tablist["launchpad_icon"] = "_static/esp_launchpad.svg"
-        
-        # Add Wokwi icon
-        tablist["wokwi_icon"] = "_static/wokwi.svg"
+        # Link to ESP Launchpad if launchpad.toml exists (optional)
+        launchpad_path = path.join(static_base_url, example_path, "launchpad.toml")
+        launchpad_full_path = path.join(env.srcdir, "..", launchpad_path)
+        if path.isfile(launchpad_full_path):
+            launchpad_url = urljoin(docs_embed_public_root, launchpad_path)
+            launchpad_base_url = getattr(env.app.config, "wokwi_esp_launchpad_url", "")
+            sep = "&" if "?" in launchpad_base_url else "?"
+            tablist["launchpad_href"] = f"{launchpad_base_url.rstrip('/')}/{sep}flashConfigURL={launchpad_url}"
 
-        if has_launchpad:
-            launchpad_toml_url = _make_url(gen_base_url, "launchpad.toml")
-            if launchpad_toml_url:
-                sep = "&" if "?" in launchpad_base_url else "?"
-                tablist["launchpad_href"] = f"{launchpad_base_url.rstrip('/')}/{sep}flashConfigURL={launchpad_toml_url}"
-        else:
-            # Use base launchpad URL
-            tablist["launchpad_href"] = launchpad_base_url.rstrip('/')
+        # Link to GitHub source .ino file
+        github_base = getattr(cfg, "docs_embed_github_base_url", None)
+        github_branch = getattr(cfg, "docs_embed_github_branch", "master")
+        if github_base and github_branch:
+            github_path = f"tree/{github_branch}/{docs_embed_esp32_relative_root}/{example_path}/{sketch_name}.ino"
+            tablist["github_href"] = f"{github_base.rstrip('/')}/{github_path.lstrip('/')}"
 
         for pid, panel in zip(panel_ids, panels):
             panel["panel_id"] = pid
@@ -260,5 +298,6 @@ class WokwiExampleDirective(Directive):
         if "class" in self.options:
             tabs_root["classes"] = self.options["class"]
         tabs_root["variant"] = "example"
+
 
         return [tabs_root]
