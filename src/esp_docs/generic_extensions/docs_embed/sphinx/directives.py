@@ -24,6 +24,9 @@ def _get_static_path(self) -> str:
         # Fallback to relative path
         return "_static/"
 
+def urljoin(*args) -> str:
+    return "/".join(map(lambda x: str(x).rstrip('/'), args))
+
 
 class WokwiDirective(Directive):
     has_content = False
@@ -57,11 +60,11 @@ class WokwiDirective(Directive):
         node["iframe_page"] = cfg.docs_embed_wokwi_viewer_url
         node["diagram"] = diagram_url
         node["firmware"] = firmware_url
-        node["width"] = self.options.get("width", cfg.wokwi_default_width)
-        node["height"] = self.options.get("height", cfg.wokwi_default_height)
+        node["width"] = self.options.get("width", cfg.docs_embed_default_width)
+        node["height"] = self.options.get("height", cfg.docs_embed_default_height)
         node["title"] = self.options.get("title", "Wokwi simulation")
-        node["allowfullscreen"] = cfg.wokwi_default_allowfullscreen if "allowfullscreen" not in self.options else True
-        node["loading"] = self.options.get("loading", cfg.wokwi_default_loading)
+        node["allowfullscreen"] = cfg.docs_embed_default_allowfullscreen if "allowfullscreen" not in self.options else True
+        node["loading"] = self.options.get("loading", cfg.docs_embed_default_loading)
         node["classes"] = ["wokwi-embed"] + self.options.get("class", [])
         node["suppress_header"] = False
 
@@ -101,10 +104,8 @@ class WokwiExampleDirective(Directive):
             └── Blink.ino
             └── ci.yml
 
-                # debug information removed; keep logic minimal
-        docs_embed_github_base_url = "https://github.com/espressif/arduino-esp32"
-        docs_embed_github_branch = "master"
-        docs_embed_launchpad_url = "https://espressif.github.io/esp-launchpad/"
+    Configuration (in conf.py):
+        TBD
 
     URL Generation:
         - Firmware: _static/{example_path}/{target}/{sketch_name}.ino.merged.bin
@@ -135,7 +136,6 @@ class WokwiExampleDirective(Directive):
 
     def run(self):
         import yaml
-        from urllib.parse import urljoin
 
         env = self.state.document.settings.env
         app = env.app
@@ -144,17 +144,16 @@ class WokwiExampleDirective(Directive):
         # Example: libraries/ESP32/examples/GPIO/Blink -> sketch name: Blink
         example_path = self.arguments[0].strip()
         sketch_name = example_path.split("/")[-1]
-
-        # Configuration values from conf.py
-        docs_embed_esp32_relative_root = getattr(cfg, "docs_embed_esp32_relative_root", None)
-        if not docs_embed_esp32_relative_root:
-            raise self.error("wokwi-example: 'docs_embed_esp32_relative_root' must be set in conf.py")
+        docs_embed_esp32_relative_root = "../.."
 
         docs_embed_public_root = getattr(cfg, "docs_embed_public_root", None)
         if not docs_embed_public_root:
-            raise self.error("wokwi-example: 'docs_embed_public_root' must be set in conf.py")
+            raise self.error("wokwi-example: 'docs_embed_public_root' must be configured in ENV or conf.py")
 
-        static_base_url = "_static/binaries/"
+        docs_embed_binaries_dir = getattr(cfg, "docs_embed_binaries_dir", None)
+        if not docs_embed_binaries_dir:
+            raise self.error("wokwi-example: 'docs_embed_binaries_dir' must be configured in ENV or conf.py")
+        docs_embed_binaries_dir = path.normpath(docs_embed_binaries_dir)
 
         # Build path to ci.yml
         ci_yml_path = path.join(env.srcdir, docs_embed_esp32_relative_root, example_path, "ci.yml")
@@ -181,21 +180,21 @@ class WokwiExampleDirective(Directive):
         # Create WokwiNode instances for each target
         wokwi_nodes: List[WokwiNode] = []
         for target in targets:
-            firmware_path = f"{static_base_url}{example_path}/{target}/{sketch_name}.ino.merged.bin"
+            firmware_path = urljoin(docs_embed_binaries_dir, example_path, target, f"{sketch_name}.ino.merged.bin")
             firmware_url = urljoin(docs_embed_public_root, firmware_path)
 
-            diagram_path = f"{static_base_url}{example_path}/{target}/diagram.{target}.json"
+            diagram_path = urljoin(docs_embed_binaries_dir, example_path, target, f"diagram.{target}.json")
             diagram_url = urljoin(docs_embed_public_root, diagram_path)
 
             # Validate files exist (unless skip_validation is set)
             if not skip_validation:
-                firmware_full_path = path.join(env.srcdir, "..", firmware_path)
+                firmware_full_path = urljoin(env.srcdir, "..", firmware_path)
                 if not path.isfile(firmware_full_path):
                     raise self.error(
                         f"wokwi-example: firmware file not found at {firmware_full_path}. "
                         f"Set 'docs_embed_skip_validation = True' in conf.py to bypass this check.")
 
-                diagram_full_path = path.join(env.srcdir, "..", diagram_path)
+                diagram_full_path = urljoin(env.srcdir, "..", diagram_path)
                 if not path.isfile(diagram_full_path):
                     raise self.error(
                         f"wokwi-example: diagram file not found at {diagram_full_path}. "
@@ -213,11 +212,11 @@ class WokwiExampleDirective(Directive):
             wn["iframe_page"] = cfg.docs_embed_wokwi_viewer_url
             wn["diagram_url"] = diagram_url
             wn["firmware_url"] = firmware_url
-            wn["width"] = self.options.get("width", getattr(cfg, "wokwi_default_width", "100%"))
-            wn["height"] = self.options.get("height", getattr(cfg, "wokwi_default_height", "500px"))
+            wn["width"] = self.options.get("width", getattr(cfg, "docs_embed_default_width"))
+            wn["height"] = self.options.get("height", getattr(cfg, "docs_embed_default_height"))
             wn["title"] = f"Wokwi simulation — {tab_label}"
-            wn["allowfullscreen"] = getattr(cfg, "wokwi_default_allowfullscreen", True) if "allowfullscreen" not in self.options else True
-            wn["loading"] = self.options.get("loading", getattr(cfg, "wokwi_default_loading", "lazy"))
+            wn["allowfullscreen"] = getattr(cfg, "docs_embed_default_allowfullscreen") if "allowfullscreen" not in self.options else True
+            wn["loading"] = self.options.get("loading", getattr(cfg, "docs_embed_default_loading"))
             wn["classes"] = ["wokwi-embed", "from-example"] + self.options.get("class", [])
             wn["static_path"] = _get_static_path(self)
 
@@ -275,20 +274,20 @@ class WokwiExampleDirective(Directive):
         tablist["static_path"] = _get_static_path(self)
 
         # Link to ESP Launchpad if launchpad.toml exists (optional)
-        launchpad_path = path.join(static_base_url, example_path, "launchpad.toml")
+        launchpad_path = path.join(docs_embed_binaries_dir, example_path, "launchpad.toml")
         launchpad_full_path = path.join(env.srcdir, "..", launchpad_path)
         if path.isfile(launchpad_full_path):
             launchpad_url = urljoin(docs_embed_public_root, launchpad_path)
-            launchpad_base_url = getattr(env.app.config, "wokwi_esp_launchpad_url", "")
+            launchpad_base_url = getattr(env.app.config, "docs_embed_esp_launchpad_url", "")
             sep = "&" if "?" in launchpad_base_url else "?"
             tablist["launchpad_href"] = f"{launchpad_base_url.rstrip('/')}/{sep}flashConfigURL={launchpad_url}"
+            print(f"Launchpad URL: {tablist['launchpad_href']}")
 
         # Link to GitHub source .ino file
-        github_base = getattr(cfg, "docs_embed_github_base_url", None)
-        github_branch = getattr(cfg, "docs_embed_github_branch", "master")
+        github_base = getattr(cfg, "docs_embed_github_base_url")
+        github_branch = getattr(cfg, "docs_embed_github_branch")
         if github_base and github_branch:
-            github_path = f"tree/{github_branch}/{docs_embed_esp32_relative_root}/{example_path}/{sketch_name}.ino"
-            tablist["github_href"] = f"{github_base.rstrip('/')}/{github_path.lstrip('/')}"
+            tablist["github_href"] = urljoin(github_base, "tree", github_branch, example_path, f"{sketch_name}.ino")
 
         for pid, panel in zip(panel_ids, panels):
             panel["panel_id"] = pid

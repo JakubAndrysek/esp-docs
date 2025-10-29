@@ -41,7 +41,7 @@ def visit_wokwi_html(self, node: WokwiNode):
         self.body.append(iframe)
         raise _n.SkipNode
 
-    about_wokwi_url = getattr(self.builder.app.config, "about_wokwi_url", None)
+    about_wokwi_url = getattr(self.builder.app.config, "docs_embed_about_wokwi_url")
     static_path = node.get("static_path", "")
 
     self.body.append('<div class="wokwi-frame">')

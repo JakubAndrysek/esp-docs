@@ -28,8 +28,3 @@ versions_url = './_static/docs_version.js'
 
 # Final PDF filename will contains target and version
 pdf_file_prefix = u'esp-docs'
-
-# Wokwi info URL
-about_wokwi_url = "https://docs.wokwi.com/"
-
-docs_embed_skip_validation = True

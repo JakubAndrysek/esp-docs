@@ -20,6 +20,8 @@ target_to_boards = {
     'esp32s3': 'board-esp32-s3-devkitc-1',
 }
 
+def urljoin(*args) -> str:
+    return "/".join(map(lambda x: str(x).rstrip('/'), args))
 
 class DiagramSync:
     """Main class for synchronizing diagram files with CI configuration."""
@@ -302,8 +304,6 @@ class DiagramSync:
     def generate_launchpad_config(self, storage_url_prefix: str, repo_url_prefix: str, override: bool = False, output_dir: Optional[Path] = None) -> None:
         """Generate ESP LaunchPad config file from ci.yml targets."""
         project_name = self.base_path.name
-        storage_url_prefix = storage_url_prefix.rstrip('/')
-        repo_url_prefix = repo_url_prefix.rstrip('/')
 
         config_file = (output_dir / "launchpad.toml") if output_dir else (self.base_path / "launchpad.toml")
         if config_file.exists() and not override:
@@ -326,32 +326,35 @@ class DiagramSync:
         # Convert platforms to chipsets
         chipsets = [self.platform_to_chipset(platform) for platform in platforms]
 
-        # Check if README.md exists
-        readme_file = self.base_path / "README.md"
-        config_readme_url = None
-        if readme_file.exists():
-            config_readme_url = f"{repo_url_prefix}/{self.base_path}/README.md"
-            click.echo(f"- Found README.md, will link as: {config_readme_url}")
+
+
+        # create firmware_images_url link from base_path (removing 'docs/' prefix if present)
+        firmware_images_url = urljoin(storage_url_prefix, self.base_path.as_posix().lstrip("docs/"))
 
         # Generate config content
         config_lines = [
             'esp_toml_version = 1.0',
             '',
-            f'firmware_images_url = "{storage_url_prefix}"',
+            f'firmware_images_url = "{firmware_images_url}"',
             '',
             '# Apps that you support and for which the binaries are available to publish.',
             f'supported_apps = ["{project_name}"]',
             ''
         ]
 
-        if config_readme_url:
+        # Check if README.md exists
+        readme_file = self.base_path / "README.md"
+        config_readme_url = None
+        if readme_file.exists():
+            config_readme_url = urljoin(repo_url_prefix, self.base_path, "README.md")
+            click.echo(f"- Found README.md, will link as: {config_readme_url}")
             config_lines.extend([f'config_readme_url = "{config_readme_url}"'])
 
         # Add image configurations for each platform
         for platform in platforms:
             chipset = self.platform_to_chipset(platform)
             lowercase_chipset = chipset.lower()
-            binary_name = f"{project_name}-{lowercase_chipset}.bin"
+            binary_name = urljoin(platform, f"{project_name}.ino.merged.bin")
             config_lines.append(f'image.{lowercase_chipset} = "{binary_name}"')
 
         # Extract description from ci.yml if available
