@@ -326,10 +326,8 @@ class DiagramSync:
         # Convert platforms to chipsets
         chipsets = [self.platform_to_chipset(platform) for platform in platforms]
 
-
-
         # create firmware_images_url link from base_path (removing 'docs/' prefix if present)
-        firmware_images_url = urljoin(storage_url_prefix, self.base_path.as_posix().lstrip("docs/"))
+        firmware_images_url = urljoin(storage_url_prefix, self.base_path.as_posix().lstrip("docs/")) + "/"
 
         # Generate config content
         config_lines = [
@@ -342,13 +340,11 @@ class DiagramSync:
             ''
         ]
 
-        # Check if README.md exists
-        readme_file = self.base_path / "README.md"
-        config_readme_url = None
-        if readme_file.exists():
-            config_readme_url = urljoin(repo_url_prefix, self.base_path, "README.md")
-            click.echo(f"- Found README.md, will link as: {config_readme_url}")
-            config_lines.extend([f'config_readme_url = "{config_readme_url}"'])
+        # Add app section [ProjectName]
+        config_lines.append(f'[{project_name}]')
+
+        # Add chipsets array
+        config_lines.append(f'chipsets = {chipsets}')
 
         # Add image configurations for each platform
         for platform in platforms:
@@ -361,7 +357,7 @@ class DiagramSync:
         description = ci_data.get("upload-binary", {}).get("description")
         if description:
             click.echo(f"- Found description in ci.yml: {description}")
-            config_lines.extend([f'description = "{description}"',])
+            config_lines.append(f'description = "{description}"')
 
         with open(config_file, 'w', encoding='utf-8') as f:
             f.write('\n'.join(config_lines) + '\n')
