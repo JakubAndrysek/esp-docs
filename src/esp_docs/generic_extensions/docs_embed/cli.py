@@ -13,12 +13,11 @@ from esp_docs.generic_extensions.docs_embed.tool.wokwi_tool import (
 
 # CLI Commands
 @click.group(
-    help="docs-embed: Utility to manage Wokwi diagrams and ESP LaunchPad configurations",
-    epilog="Run this command from the root of the repository !!!",
+    help="docs-embed: Utility to manage Wokwi diagrams and ESP LaunchPad configurations"
 )
 @click.option(
     "--path",
-    required=True,
+    default=".",
     type=str,
     help="Path to the directory with examples",
 )
@@ -29,24 +28,12 @@ def main(ctx: click.Context, path: str):
     ctx.obj["path"] = path
 
 
-@main.command(name="init-project")
+@main.command(name="init-diagram")
 @click.option(
     "--platforms",
     type=str,
-    default="esp32,esp32s2,esp32s3",
+    required=True,
     help=f"Comma-separated list of platforms to initialise. Valid: {', '.join(target_to_boards.keys())}",
-)
-@click.option(
-    "--diagram/--no-diagram",
-    type=bool,
-    default=True,
-    help="Generate diagram files (default: true)",
-)
-@click.option(
-    "--ci/--no-ci",
-    type=bool,
-    default=False,
-    help="Generate ci.yml from diagrams after creating diagrams (default: false)",
 )
 @click.option(
     "--override/--no-override",
@@ -55,18 +42,15 @@ def main(ctx: click.Context, path: str):
     help="Override existing files",
 )
 @click.pass_context
-def init_project(
-    ctx: click.Context, platforms: str, diagram: bool, ci: bool, override: bool
-):
-    """Initialize project scaffolding and optional diagrams/ci.yml.
+def init_project(ctx: click.Context, platforms: str, override: bool):
+    """Initialize a new project with Wokwi diagrams and CI configuration.
 
     Examples:
-      docs-embed --path folder/examples init-project --platforms esp32,esp32s2 --diagram --ci --override
+      docs-embed init-project --platforms esp32,esp32s2 (generates diagrams for esp32 and esp32s2)
+      docs-embed --path folder/examples init-project --platforms esp32,esp32s2 --override
     """
-    sync = DiagramSync(ctx.obj.get("path"))
-
     try:
-        # parse platforms
+        sync = DiagramSync(ctx.obj.get("path"))
         platforms_list = [p.strip() for p in platforms.split(",") if p.strip()]
         allowed = target_to_boards.keys()
         invalid = [p for p in platforms_list if p not in allowed]
@@ -77,7 +61,7 @@ def init_project(
             )
             sys.exit(1)
 
-        sync.init_project(platforms_list, diagram, ci, override)
+        sync.init_project(platforms_list, override)
     except Exception as e:
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
@@ -96,9 +80,8 @@ def init_project(
 @click.pass_context
 def ci_from_diagram(ctx: click.Context, platform, override):
     """Generate ci.yml from diagram files."""
-    sync = DiagramSync(ctx.obj.get("path"))
-
     try:
+        sync = DiagramSync(ctx.obj.get("path"))
         click.echo("Generating ci.yml from diagram files...")
         sync.generate_ci_from_diagram(platform, override)
     except Exception as e:
@@ -118,14 +101,13 @@ def ci_from_diagram(ctx: click.Context, platform, override):
 )
 @click.pass_context
 def diagram_from_ci(ctx: click.Context, platform, override):
-    """Generate diagram files from ci.yml + diagram-default.json.
+    """Generate diagram files from ci.yml.
 
     Examples:
       docs-embed --path folder/examples diagram-from-ci --platform esp32 --override
     """
-    sync = DiagramSync(ctx.obj.get("path"))
-
     try:
+        sync = DiagramSync(ctx.obj.get("path"))
         click.echo("Generating diagram files from ci.yml...")
         sync.generate_diagram_from_ci(platform, override)
         click.echo("Diagram generation completed successfully!")
@@ -136,7 +118,7 @@ def diagram_from_ci(ctx: click.Context, platform, override):
 
 @main.command()
 @click.argument(
-    "storage_url_prefix",
+    "--storage_url_prefix",
     type=str,
     required=True,
     envvar="STORAGE_URL_PREFIX",
@@ -158,11 +140,10 @@ def launchpad_config(ctx: click.Context, storage_url_prefix, repo_url_prefix, ov
     """Generate ESP LaunchPad config file with the specified firmware prefix.
 
     Examples:
-        docs-embed --path folder/examples launchpad-config https://storage.url/prefix --repo-url-prefix https://repo.url/prefix --override
+        docs-embed --path folder/examples launchpad-config --storage_url_prefix https://storage.url/prefix --repo-url-prefix https://repo.url/prefix --override
     """
-    sync = DiagramSync(ctx.obj.get("path"))
-
     try:
+        sync = DiagramSync(ctx.obj.get("path"))
         click.echo("Generating ESP LaunchPad config...")
         sync.generate_launchpad_config(storage_url_prefix, repo_url_prefix, override)
         click.echo("ESP LaunchPad config generation completed successfully!")

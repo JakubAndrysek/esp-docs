@@ -3,12 +3,11 @@
 Diagram and CI synchronization script for ESP32 Arduino examples.
 """
 
-import json
-import yaml
-import sys
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 import click
+
+from esp_docs.generic_extensions.docs_embed.tool.file_utils import load_json, load_yaml, save_yaml, save_json, save_toml
 
 target_to_boards = {
     'esp32': 'board-esp32-devkit-c-v4',
@@ -47,73 +46,12 @@ class DiagramSync:
             'dependencies': {}
         }
 
-    def init_project(self, platforms_list: List[str], diagram: bool, ci: bool, override: bool):
+    def init_project(self, platforms_list: List[str], override: bool):
         click.echo(f"Initializing project in {self.base_path}")
 
-        if diagram:
-            for platform in platforms_list:
-                click.echo(f"Generating diagram for platform: {platform}")
-                self.generate_diagram(platform, override)
-
-    def load_json(self, file_path: Path) -> Dict[str, Any]:
-        """Load JSON file safely with error handling."""
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            click.echo(f"Error: File {file_path} not found", err=True)
-            sys.exit(1)
-        except json.JSONDecodeError as e:
-            click.echo(f"Error: Invalid JSON in {file_path}: {e}", err=True)
-            sys.exit(1)
-
-    def load_yaml(self, file_path: Path) -> Dict[str, Any]:
-        """Load YAML file safely with error handling."""
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                return yaml.safe_load(f)
-        except FileNotFoundError:
-            click.echo(f"Error: File {file_path} not found", err=True)
-            sys.exit(1)
-        except yaml.YAMLError as e:
-            click.echo(f"Error: Invalid YAML in {file_path}: {e}", err=True)
-            sys.exit(1)
-
-    def save_yaml(self, file_path: Path, data: Dict[str, Any], override: bool = False) -> None:
-        """Save YAML file with proper formatting."""
-        if file_path.exists() and not override:
-            click.echo(f"Warning: {file_path} already exists. Use --override to overwrite.")
-            return
-
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            with open(file_path, 'w', encoding='utf-8') as f:
-                yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
-        except Exception as e:
-            click.echo(f"Error: Failed to write YAML to {file_path}: {e}", err=True)
-            sys.exit(1)
-
-        click.echo(f"Saved: {file_path}")
-
-    def save_json(self, file_path: Path, data: Dict[str, Any], override: bool = False) -> None:
-        """Save JSON file with compact formatting."""
-        if file_path.exists() and not override:
-            click.echo(f"Warning: {file_path} already exists. Use --override to overwrite.")
-            return
-
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            # Try to use compact-json for better formatting
-            from compact_json import Formatter
-            formatter = Formatter()
-            formatter.dump(data, file_path, newline_at_eof=True)
-        except ImportError:
-            # Fall back to standard json
-            click.echo("compact-json not available, using standard JSON formatting")
-            with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False, separators=(',', ': '))
-
-        click.echo(f"Saved: {file_path}")
+        for platform in platforms_list:
+            click.echo(f"Generating diagram for platform: {platform}")
+            self.generate_diagram(platform, override, {})
 
     # Data Processing
     def is_serial_connection(self, connection: List[str]) -> bool:
@@ -134,7 +72,7 @@ class DiagramSync:
         if not ci_file.exists():
             return []
 
-        ci_data = self.load_yaml(ci_file)
+        ci_data = load_yaml(ci_file)
         return ci_data.get("upload-binary", {}).get("targets", [])
 
     def get_platforms_from_diagrams(self) -> List[str]:
@@ -187,7 +125,6 @@ class DiagramSync:
                 return f'ESP32-{base.upper()}'
         raise ValueError(f"Unknown platform '{platform}' for chipset mapping.")
 
-    # Main Generation Methods
     def generate_ci_from_diagram(self, platform: Optional[str] = None, override: bool = False) -> None:
         """Generate ci.yml from diagram files."""
         platforms = [platform] if platform else self.get_platforms_from_diagrams()
@@ -200,7 +137,7 @@ class DiagramSync:
         ci_file = self.base_path / "ci.yml"
         ci_data = {}
         if ci_file.exists():
-            ci_data = self.load_yaml(ci_file)
+            ci_data = load_yaml(ci_file)
             if ci_data.get("upload-binary") and not override:
                 click.echo("ci.yml already has 'upload-binary' section. Use --override to overwrite.")
 
@@ -223,7 +160,7 @@ class DiagramSync:
                 click.echo(f"- {plat}: Warning: diagram.{plat}.json not found, skipping")
                 continue
 
-            diagram_data = self.load_json(diagram_file)
+            diagram_data = load_json(diagram_file)
 
             # Build platform-specific diagram
             parts = self.filter_parts(diagram_data.get("parts", []))
@@ -251,7 +188,7 @@ class DiagramSync:
 
         # Ensure the modified upload_binary is saved back to ci_data
         ci_data["upload-binary"] = upload_binary
-        self.save_yaml(ci_file, ci_data, True)
+        save_yaml(ci_file, ci_data, True)
 
     def generate_diagram_from_ci(self, platform: Optional[str] = None, override: bool = False) -> None:
         """Generate diagram files from ci.yml + diagram-default.json."""
@@ -267,7 +204,7 @@ class DiagramSync:
             click.echo("Error: ci.yml not found", err=True)
             return
 
-        ci_data = self.load_yaml(ci_file)
+        ci_data = load_yaml(ci_file)
 
         # Process each platform
         for plat in platforms:
@@ -299,7 +236,7 @@ class DiagramSync:
         if platform_dependencies := platform_diagram.get("dependencies"):
             diagram_data["dependencies"] = platform_dependencies
 
-        self.save_json(diagram_file, diagram_data, True)
+        save_json(diagram_file, diagram_data, True)
 
     def generate_launchpad_config(self, storage_url_prefix: str, repo_url_prefix: str, override: bool = False, output_dir: Optional[Path] = None) -> None:
         """Generate ESP LaunchPad config file from ci.yml targets."""
@@ -316,7 +253,7 @@ class DiagramSync:
             click.echo("Error: ci.yml not found", err=True)
             return
 
-        ci_data = self.load_yaml(ci_file)
+        ci_data = load_yaml(ci_file)
         platforms = ci_data.get("upload-binary", {}).get("targets", [])
 
         if not platforms:
@@ -329,38 +266,32 @@ class DiagramSync:
         # create firmware_images_url link from base_path (removing 'docs/' prefix if present)
         firmware_images_url = urljoin(storage_url_prefix, self.base_path.as_posix().lstrip("docs/")) + "/"
 
-        # Generate config content
-        config_lines = [
-            'esp_toml_version = 1.0',
-            '',
-            f'firmware_images_url = "{firmware_images_url}"',
-            '',
-            '# Apps that you support and for which the binaries are available to publish.',
-            f'supported_apps = ["{project_name}"]',
-            ''
-        ]
-
-        # Add app section [ProjectName]
-        config_lines.append(f'[{project_name}]')
-
-        # Add chipsets array
-        config_lines.append(f'chipsets = {chipsets}')
+        # Generate config data structure
+        config_data = {
+            'esp_toml_version': 1.0,
+            'firmware_images_url': firmware_images_url,
+            'supported_apps': [project_name],
+            project_name: {
+                'chipsets': chipsets,
+                'image': {}
+            }
+        }
 
         # Add image configurations for each platform
         for platform in platforms:
             chipset = self.platform_to_chipset(platform)
             lowercase_chipset = chipset.lower()
             binary_name = urljoin(platform, f"{project_name}.ino.merged.bin")
-            config_lines.append(f'image.{lowercase_chipset} = "{binary_name}"')
+            config_data[project_name]['image'][lowercase_chipset] = binary_name
 
         # Extract description from ci.yml if available
         description = ci_data.get("upload-binary", {}).get("description")
         if description:
             click.echo(f"- Found description in ci.yml: {description}")
-            config_lines.append(f'description = "{description}"')
+            config_data[project_name]['description'] = description
 
-        with open(config_file, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(config_lines) + '\n')
+        # Save using TOML library
+        save_toml(config_file, config_data, override)
 
         click.echo(f"Generated ESP LaunchPad config: {config_file}")
         click.echo(f"Supported chipsets: {', '.join(chipsets)}")
