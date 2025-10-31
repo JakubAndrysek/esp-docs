@@ -1,3 +1,12 @@
+"""Sphinx directives for embedding Wokwi diagrams in documentation.
+
+This module provides two main directives:
+1. WokwiDirective: Embed a single Wokwi diagram with explicit diagram/firmware URLs
+2. WokwiExampleDirective: Embed Arduino examples with auto-discovery from ci.yml
+
+Both directives support tabbed interfaces for displaying multiple targets/variations.
+"""
+
 from __future__ import annotations
 
 from typing import List
@@ -10,7 +19,17 @@ from os import path
 
 
 def _get_static_path(self) -> str:
-    """Calculate relative path to _static directory from current document."""
+    """Calculate relative path to _static directory from current document.
+
+    Determines the correct number of "../" segments needed to reach the _static
+    directory from the current document's location in the documentation tree.
+
+    Args:
+        self: Directive instance with document context
+
+    Returns:
+        Relative path string to _static directory (e.g., "../_static/" or "_static/")
+    """
     try:
         # Get current document name (e.g., "api/gpio")
         docname = self.state.document.settings.env.docname
@@ -26,10 +45,52 @@ def _get_static_path(self) -> str:
 
 
 def urljoin(*args) -> str:
+    """Join URL path segments with forward slashes.
+
+    Safely combines multiple path segments into a URL path, handling trailing
+    slashes correctly.
+
+    Args:
+        *args: Path segments to join
+
+    Returns:
+        Joined URL path with single forward slashes between segments
+
+    Examples:
+        urljoin("https://example.com", "path", "file.bin")
+        # Returns: "https://example.com/path/file.bin"
+    """
     return "/".join(map(lambda x: str(x).rstrip('/'), args))
 
 
 class WokwiDirective(Directive):
+    """Directive to embed a single Wokwi diagram with explicit URLs.
+
+    Usage:
+        .. wokwi:: [name]
+           :diagram: <url-to-diagram.json>
+           :firmware: <url-to-firmware.bin>
+           :width: 100%
+           :height: 500px
+           :loading: lazy
+           :allowfullscreen:
+           :tab: ESP32
+
+    Options:
+        name (optional text arg): Name/label for the diagram (used in tabs)
+        diagram: URL to Wokwi diagram JSON file (required)
+        firmware: URL to compiled firmware binary (required)
+        width: CSS width value (default: 100%)
+        height: CSS height value (default: 500px)
+        loading: iframe loading strategy - lazy, eager, or auto (default: lazy)
+        title: Title text for the iframe
+        allowfullscreen: Enable fullscreen mode
+        tab: Tab label (alternative to name argument)
+        class: CSS class names to apply
+
+    Returns:
+        WokwiNode containing the diagram configuration
+    """
     has_content = False
     required_arguments = 0
     optional_arguments = 1
@@ -81,16 +142,27 @@ class WokwiDirective(Directive):
 
 
 class WokwiExampleDirective(Directive):
-    """
-    Directive to embed Wokwi simulations for Arduino ESP32 examples with multiple targets.
+    """Directive to embed Arduino examples with auto-discovered targets.
+
+    Embeds Wokwi simulations for Arduino ESP32 examples with multiple target support.
+    Automatically discovers targets from ci.yml and creates tabbed interface for each.
 
     Usage:
         .. wokwi-example:: libraries/ESP32/examples/GPIO/Blink
+           :width: 100%
+           :height: 500px
+           :allowfullscreen:
 
     Expected Directory Structure:
-        _static/
-        └── libraries/ESP32/examples/GPIO/Blink/
-            ├── launchpad.toml
+        Arduino Source:
+            libraries/ESP32/examples/GPIO/Blink/
+            ├── Blink.ino
+            └── ci.yml
+
+        Built Artifacts (_static/):
+            _static/libraries/ESP32/examples/GPIO/Blink/
+            ├── ci.yml (copied by the build process)
+            ├── launchpad.toml (optional)
             ├── esp32/
             │   ├── Blink.ino.merged.bin
             │   └── diagram.esp32.json
@@ -98,28 +170,24 @@ class WokwiExampleDirective(Directive):
                 ├── Blink.ino.merged.bin
                 └── diagram.esp32s2.json
 
-
-        Arduino Source Files:
-        libraries/
-        └── ESP32/examples/GPIO/Blink/
-            └── Blink.ino
-            └── ci.yml
-
     Configuration (in conf.py):
-        TBD
+        docs_embed_public_root = "https://example.com"
+        docs_embed_binaries_dir = "_static"
+        docs_embed_esp_launchpad_url = "https://espressif.github.io/esp-launchpad"
+        docs_embed_github_base_url = "https://github.com/espressif/esp-idf"
+        docs_embed_github_branch = "master"
+        docs_embed_skip_validation = False
 
-    URL Generation:
-        - Firmware: _static/{example_path}/{target}/{sketch_name}.ino.merged.bin
-        - Diagram: _static/{example_path}/diagram.{target}.json
-        - Launchpad: _static/{example_path}/launchpad.toml
+    Features:
+        - Reads ci.yml to auto-discover supported targets (ESP32, ESP32-S2, etc.)
+        - Creates tabs for each target's simulation
+        - Shows source code tab with .ino file content
+        - Optionally links to ESP Launchpad configuration
+        - Optionally links to GitHub source code
+        - Validates file existence (configurable)
 
-    This directive:
-    1. Reads ci.yml from the Arduino example directory to get targets
-    2. Creates tabs for each target (ESP32, ESP32-S2, etc.)
-    3. Generates URLs for firmware binaries and Wokwi diagrams in _static/
-    4. Optionally shows ESP Launchpad button if launchpad.toml exists
-    5. Shows source code tab with the .ino file content + link to source
-    6. Validates file existence unless docs_embed_skip_validation is True
+    Returns:
+        WokwiTabsNode containing tabbed interface with code and diagram tabs
     """
     required_arguments = 1  # path to example directory
     optional_arguments = 0

@@ -67,7 +67,13 @@ class DiagramSync:
             'dependencies': {}
         }
 
-    def init_project(self, platforms_list: List[str], override: bool):
+    def init_project(self, platforms_list: List[str], override: bool) -> None:
+        """Initialize project by generating diagrams for specified platforms.
+        
+        Args:
+            platforms_list: List of platform names to generate diagrams for
+            override: Whether to overwrite existing diagram files
+        """
         click.echo(f"Initializing project in {self.base_path}")
 
         for platform in platforms_list:
@@ -88,8 +94,15 @@ class DiagramSync:
         return [conn for conn in connections if not self.is_serial_connection(conn)]
 
     def get_platforms_from_ci(self) -> List[str]:
-        """Get all platforms from ci.yml targets."""
-        ci_file = self.base_path / "ci.yml"
+        """Get all platforms from ci.yml targets.
+        
+        Reads the ci.yml file and extracts platform names from the
+        upload-binary section.
+        
+        Returns:
+            List of platform names from ci.yml, or empty list if file doesn't exist
+        """
+        ci_file = self.base_path / CI_CONFIG_FILE
         if not ci_file.exists():
             return []
 
@@ -97,11 +110,18 @@ class DiagramSync:
         return ci_data.get("upload-binary", {}).get("targets", [])
 
     def get_platforms_from_diagrams(self) -> List[str]:
-        """Get all platforms from existing diagram files."""
+        """Get all platforms from existing diagram files.
+        
+        Scans the base directory for diagram.*.json files and extracts
+        platform names from the filenames.
+        
+        Returns:
+            List of platform names found in diagram files
+        """
         platforms = []
-        for file_path in self.base_path.glob("diagram.*.json"):
-            if file_path.name.startswith("diagram.") and file_path.name.endswith(".json"):
-                platform = file_path.name.replace("diagram.", "").replace(".json", "")
+        for file_path in self.base_path.glob(f"{DIAGRAM_FILE_PREFIX}*{DIAGRAM_FILE_SUFFIX}"):
+            if file_path.name.startswith(DIAGRAM_FILE_PREFIX) and file_path.name.endswith(DIAGRAM_FILE_SUFFIX):
+                platform = file_path.name.replace(DIAGRAM_FILE_PREFIX, "").replace(DIAGRAM_FILE_SUFFIX, "")
                 if platform != "default":
                     platforms.append(platform)
         return platforms
@@ -147,7 +167,15 @@ class DiagramSync:
         raise ValueError(f"Unknown platform '{platform}' for chipset mapping.")
 
     def generate_ci_from_diagram(self, platform: Optional[str] = None, override: bool = False) -> None:
-        """Generate ci.yml from diagram files."""
+        """Generate ci.yml from diagram files.
+        
+        Processes diagram files and extracts platform-specific configuration
+        to generate or update the ci.yml file with upload-binary section.
+        
+        Args:
+            platform: Optional specific platform to process. If None, all platforms are processed.
+            override: Whether to overwrite the upload-binary section if it exists
+        """
         platforms = [platform] if platform else self.get_platforms_from_diagrams()
 
         if not platforms:
@@ -155,12 +183,13 @@ class DiagramSync:
             return
 
         # Load existing ci.yml if it exists
-        ci_file = self.base_path / "ci.yml"
+        ci_file = self.base_path / CI_CONFIG_FILE
         ci_data = {}
         if ci_file.exists():
             ci_data = load_yaml(ci_file)
             if ci_data.get("upload-binary") and not override:
                 click.echo("ci.yml already has 'upload-binary' section. Use --override to overwrite.")
+                return
 
         # Ensure upload-binary structure exists in ci_data
         if "upload-binary" not in ci_data:
@@ -172,49 +201,67 @@ class DiagramSync:
 
         # Process each platform
         for plat in platforms:
-            # Add platform to targets if not already present
-            if plat not in upload_binary["targets"]:
-                upload_binary["targets"].append(plat)
-
-            diagram_file = self.base_path / f"diagram.{plat}.json"
-            if not diagram_file.exists():
-                click.echo(f"- {plat}: Warning: diagram.{plat}.json not found, skipping")
-                continue
-
-            diagram_data = load_json(diagram_file)
-
-            # Build platform-specific diagram
-            parts = self.filter_parts(diagram_data.get("parts", []))
-            connections = self.filter_connections(diagram_data.get("connections", []))
-            dependencies = diagram_data.get("dependencies")
-
-            # Skip platforms with no meaningful content (empty parts and connections)
-            if not parts and not connections and not dependencies:
-                click.echo(f"- {plat}: Skipping platform {plat}: no parts, connections, or dependencies")
-                continue
-
-            platform_diagram = {
-                "parts": parts,
-                "connections": connections
-            }
-
-            # Add dependencies if they exist
-            if dependencies:
-                platform_diagram["dependencies"] = dependencies
-
-            # Update platform data
-            upload_binary["diagram"][plat] = platform_diagram
-
-            click.echo(
-                f"- {plat}: Processed platform: {plat} with {len(platform_diagram['parts'])} parts and {len(platform_diagram['connections'])} connections"
-            )
+            self._process_diagram_file_to_ci(plat, upload_binary)
 
         # Ensure the modified upload_binary is saved back to ci_data
         ci_data["upload-binary"] = upload_binary
         save_yaml(ci_file, ci_data, True)
 
+    def _process_diagram_file_to_ci(self, platform: str, upload_binary: Dict[str, Any]) -> None:
+        """Process a single diagram file and update upload_binary configuration.
+        
+        Args:
+            platform: Platform name to process
+            upload_binary: Dictionary to update with processed configuration
+        """
+        # Add platform to targets if not already present
+        if platform not in upload_binary["targets"]:
+            upload_binary["targets"].append(platform)
+
+        diagram_file = self.base_path / f"{DIAGRAM_FILE_PREFIX}{platform}{DIAGRAM_FILE_SUFFIX}"
+        if not diagram_file.exists():
+            click.echo(f"- {platform}: Warning: {diagram_file.name} not found, skipping")
+            return
+
+        diagram_data = load_json(diagram_file)
+
+        # Build platform-specific diagram
+        parts = self.filter_parts(diagram_data.get("parts", []))
+        connections = self.filter_connections(diagram_data.get("connections", []))
+        dependencies = diagram_data.get("dependencies")
+
+        # Skip platforms with no meaningful content
+        if not parts and not connections and not dependencies:
+            click.echo(f"- {platform}: Skipping: no parts, connections, or dependencies")
+            return
+
+        platform_diagram = {
+            "parts": parts,
+            "connections": connections
+        }
+
+        # Add dependencies if they exist
+        if dependencies:
+            platform_diagram["dependencies"] = dependencies
+
+        # Update platform data
+        upload_binary["diagram"][platform] = platform_diagram
+
+        click.echo(
+            f"- {platform}: Processed with {len(platform_diagram['parts'])} parts and "
+            f"{len(platform_diagram['connections'])} connections"
+        )
+
     def generate_diagram_from_ci(self, platform: Optional[str] = None, override: bool = False) -> None:
-        """Generate diagram files from ci.yml + diagram-default.json."""
+        """Generate diagram files from ci.yml + diagram-default.json.
+        
+        Reads platform-specific diagram configuration from ci.yml and generates
+        diagram.*.json files by merging them with default diagram configurations.
+        
+        Args:
+            platform: Optional specific platform to generate. If None, generates for all platforms in ci.yml
+            override: Whether to overwrite existing diagram files
+        """
         platforms = [platform] if platform else self.get_platforms_from_ci()
 
         if not platforms:
@@ -222,9 +269,9 @@ class DiagramSync:
             return
 
         # Load ci.yml
-        ci_file = self.base_path / "ci.yml"
+        ci_file = self.base_path / CI_CONFIG_FILE
         if not ci_file.exists():
-            click.echo("Error: ci.yml not found", err=True)
+            click.echo(f"Error: {CI_CONFIG_FILE} not found", err=True)
             return
 
         ci_data = load_yaml(ci_file)
@@ -233,7 +280,17 @@ class DiagramSync:
         for plat in platforms:
             self.generate_diagram(plat, override, ci_data.get("upload-binary", {}))
 
-    def generate_diagram(self, platform: str, override: bool = False, config_data: Optional[Dict[str, Any]] = {}) -> None:
+    def generate_diagram(self, platform: str, override: bool = False, config_data: Optional[Dict[str, Any]] = None) -> None:
+        """Generate a diagram file for the specified platform.
+        
+        Args:
+            platform: Target platform name
+            override: Whether to overwrite existing diagram files
+            config_data: Configuration data containing platform-specific diagram settings
+        """
+        if config_data is None:
+            config_data = {}
+            
         diagram_file = self.base_path / f"diagram.{platform}.json"
 
         # Check if file exists and we're not overriding
@@ -262,16 +319,29 @@ class DiagramSync:
         save_json(diagram_file, diagram_data, True)
 
     def generate_launchpad_config(self, storage_url_prefix: str, repo_url_prefix: str, override: bool = False, output_dir: Optional[Path] = None) -> None:
-        """Generate ESP LaunchPad config file from ci.yml targets."""
+        """Generate ESP LaunchPad config file from ci.yml targets.
+        
+        Creates a TOML configuration file for ESP LaunchPad with firmware images,
+        supported chipsets, and project metadata extracted from ci.yml.
+        
+        Args:
+            storage_url_prefix: Base URL prefix for firmware images
+            repo_url_prefix: Base URL prefix for repository resources
+            override: Whether to overwrite existing config files
+            output_dir: Optional output directory. If None, uses base_path
+            
+        Raises:
+            Click exceptions for missing ci.yml or no platforms found
+        """
         project_name = self.base_path.name
-
-        config_file = (output_dir / "launchpad.toml") if output_dir else (self.base_path / "launchpad.toml")
+        config_file = (output_dir / LAUNCHPAD_CONFIG_FILE) if output_dir else (self.base_path / LAUNCHPAD_CONFIG_FILE)
+        
         if config_file.exists() and not override:
             click.echo(f"Warning: {config_file} already exists. Use --override to overwrite.")
             return
 
         # Load ci.yml to get platforms
-        ci_file = self.base_path / "ci.yml"
+        ci_file = self.base_path / CI_CONFIG_FILE
         if not ci_file.exists():
             click.echo("Error: ci.yml not found", err=True)
             return
@@ -302,10 +372,7 @@ class DiagramSync:
 
         # Add image configurations for each platform
         for platform in platforms:
-            chipset = self.platform_to_chipset(platform)
-            lowercase_chipset = chipset.lower()
-            binary_name = urljoin(platform, f"{project_name}.ino.merged.bin")
-            config_data[project_name]['image'][lowercase_chipset] = binary_name
+            self._add_platform_image_config(config_data, project_name, platform)
 
         # Extract description from ci.yml if available
         description = ci_data.get("upload-binary", {}).get("description")
@@ -317,3 +384,16 @@ class DiagramSync:
 
         click.echo(f"Generated ESP LaunchPad config: {config_file}")
         click.echo(f"Supported chipsets: {', '.join(chipsets)}")
+
+    def _add_platform_image_config(self, config_data: Dict[str, Any], project_name: str, platform: str) -> None:
+        """Add platform-specific image configuration to LaunchPad config.
+        
+        Args:
+            config_data: Configuration dictionary to update
+            project_name: Name of the project
+            platform: Platform name
+        """
+        chipset = self.platform_to_chipset(platform)
+        lowercase_chipset = chipset.lower()
+        binary_name = urljoin(platform, f"{project_name}.ino.merged.bin")
+        config_data[project_name]['image'][lowercase_chipset] = binary_name
