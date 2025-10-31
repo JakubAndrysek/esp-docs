@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import html
-import re
 from typing import Dict, Optional
 from urllib.parse import urlencode, quote
 
@@ -29,8 +28,6 @@ def loading_choice(arg: str) -> str:
     if v not in ("lazy", "eager", "auto"):
         raise ValueError("loading must be one of: lazy | eager | auto")
     return v
-
-
 
 
 def iframe_url(base: str, diagram_url: str, firmware_url: str, iframe_page_params: Optional[Dict[str, str]] = None) -> str:

@@ -22,11 +22,12 @@ CONFIG_DEFAULTS = {
     "docs_embed_esp_launchpad_url": "https://espressif.github.io/esp-launchpad",
     "docs_embed_about_wokwi_url": "https://docs.wokwi.com",
     "docs_embed_skip_validation": False,
-    "docs_embed_github_base_url": None, # deduced from Github ENV in CI
-    "docs_embed_github_branch": None, # deduced from Github ENV in CI
-    "docs_embed_public_root": None, # deduced from Github ENV in CI
-    "docs_embed_binaries_dir": None, # deduced from Github ENV in CI
+    "docs_embed_github_base_url": None,  # deduced from Github ENV in CI
+    "docs_embed_github_branch": None,  # deduced from Github ENV in CI
+    "docs_embed_public_root": None,  # deduced from Github ENV in CI
+    "docs_embed_binaries_dir": None,  # deduced from Github ENV in CI
 }
+
 
 def _override_config_from_env(app: Sphinx, config) -> None:
     """Override config values from environment variables if they exist.

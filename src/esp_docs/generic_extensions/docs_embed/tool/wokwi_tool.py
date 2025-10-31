@@ -19,8 +19,10 @@ target_to_boards = {
     'esp32s3': 'board-esp32-s3-devkitc-1',
 }
 
+
 def urljoin(*args) -> str:
     return "/".join(map(lambda x: str(x).rstrip('/'), args))
+
 
 class DiagramSync:
     """Main class for synchronizing diagram files with CI configuration."""
@@ -184,7 +186,8 @@ class DiagramSync:
             # Update platform data
             upload_binary["diagram"][plat] = platform_diagram
 
-            click.echo(f"- {plat}: Processed platform: {plat} with {len(platform_diagram['parts'])} parts and {len(platform_diagram['connections'])} connections")
+            click.echo(f"- {plat}: Processed platform: {plat} with {len(platform_diagram['parts'])} \
+                       parts and {len(platform_diagram['connections'])} connections")
 
         # Ensure the modified upload_binary is saved back to ci_data
         ci_data["upload-binary"] = upload_binary

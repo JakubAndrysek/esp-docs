@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List
 
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
@@ -23,6 +23,7 @@ def _get_static_path(self) -> str:
     except Exception:
         # Fallback to relative path
         return "_static/"
+
 
 def urljoin(*args) -> str:
     return "/".join(map(lambda x: str(x).rstrip('/'), args))
@@ -297,6 +298,5 @@ class WokwiExampleDirective(Directive):
         if "class" in self.options:
             tabs_root["classes"] = self.options["class"]
         tabs_root["variant"] = "example"
-
 
         return [tabs_root]
