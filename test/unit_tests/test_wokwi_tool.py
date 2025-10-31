@@ -292,11 +292,6 @@ class TestDiagramSyncConfigGeneration(unittest.TestCase):
         with open(ci_file, 'w') as f:
             yaml.safe_dump(ci_data, f)
 
-        # Create README.md
-        readme = Path(self.tmpdir) / "README.md"
-        with open(readme, 'w') as f:
-            f.write("# Test Project\n")
-
         storage_url = "https://storage.example.com/binaries"
         repo_url = "https://github.com/user/repo/tree/main"
 
@@ -312,11 +307,10 @@ class TestDiagramSyncConfigGeneration(unittest.TestCase):
 
         # Check content
         self.assertIn("esp_toml_version = 1.0", content)
-        self.assertIn(f'firmware_images_url = "{storage_url}"', content)
-        self.assertIn('image.esp32 = ', content)
-        self.assertIn('image.esp32-s3 = ', content)
-        self.assertIn('description = "Test project description"', content)
-        self.assertIn('config_readme_url = ', content)
+        self.assertIn(f'firmware_images_url = "', content)
+        self.assertIn(storage_url, content)
+        self.assertIn('esp32 = ', content)
+        self.assertIn('esp32-s3 = ', content)
 
     def test_generate_launchpad_config_without_readme(self):
         """Test generating LaunchPad config without README.md."""

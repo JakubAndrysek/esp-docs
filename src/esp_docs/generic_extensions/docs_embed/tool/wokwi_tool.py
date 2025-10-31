@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
 Diagram and CI synchronization script for ESP32 Arduino examples.
+
+This module provides tools for synchronizing Wokwi diagram files with CI configuration
+and generating LaunchPad configuration files from project metadata.
 """
 
 from pathlib import Path
@@ -9,6 +12,7 @@ import click
 
 from esp_docs.generic_extensions.docs_embed.tool.file_utils import load_json, load_yaml, save_yaml, save_json, save_toml
 
+# Mapping of platform names to Wokwi board types
 target_to_boards = {
     'esp32': 'board-esp32-devkit-c-v4',
     'esp32c3': 'board-esp32-c3-devkitm-1',
@@ -19,8 +23,23 @@ target_to_boards = {
     'esp32s3': 'board-esp32-s3-devkitc-1',
 }
 
+# File naming constants
+DIAGRAM_FILE_PREFIX = "diagram."
+DIAGRAM_FILE_SUFFIX = ".json"
+LAUNCHPAD_CONFIG_FILE = "launchpad.toml"
+CI_CONFIG_FILE = "ci.yml"
+README_FILE = "README.md"
 
-def urljoin(*args) -> str:
+
+def urljoin(*args: str) -> str:
+    """Join URL path components, removing trailing slashes.
+
+    Args:
+        *args: URL path components to join
+
+    Returns:
+        Joined URL path without trailing slashes
+    """
     return "/".join(map(lambda x: str(x).rstrip('/'), args))
 
 
