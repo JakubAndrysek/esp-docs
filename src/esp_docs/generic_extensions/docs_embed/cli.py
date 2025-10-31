@@ -117,7 +117,7 @@ def diagram_from_ci(ctx: click.Context, platform, override):
 
 
 @main.command()
-@click.argument(
+@click.option(
     "--storage_url_prefix",
     type=str,
     required=True,

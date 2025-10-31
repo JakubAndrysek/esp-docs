@@ -31,8 +31,6 @@ def _render_iframe_attrs(node: WokwiNode) -> tuple[str, str, str]:
     return attr_str, allow, viewer_url
 
 
-# --- Single Wokwi (keep header with info + fullscreen only) ---
-
 def visit_wokwi_html(self, node: WokwiNode):
     attr_str, allow, _ = _render_iframe_attrs(node)
     iframe = f"<iframe {attr_str}{allow}></iframe>"
@@ -75,8 +73,6 @@ def visit_wokwi_html(self, node: WokwiNode):
 def depart_wokwi_html(self, node: WokwiNode):
     pass
 
-
-# --- Tabs container ---
 
 def visit_wokwi_tabs_html(self, node: WokwiTabsNode):
     classes = "wokwi-tabs" + (" " + " ".join(node.get("classes", [])) if node.get("classes") else "")
@@ -195,8 +191,6 @@ def visit_tabpanel_html(self, node: TabPanelNode):
 def depart_tabpanel_html(self, node: TabPanelNode):
     self.body.append("</div>")
 
-
-# --- Text / LaTeX fallbacks (unchanged) ---
 
 def _fallback_text(viewer_url: str) -> str:
     return f"Wokwi simulation: {viewer_url}"

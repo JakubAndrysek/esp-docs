@@ -57,7 +57,7 @@ class DiagramSync:
 
     # Data Processing
     def is_serial_connection(self, connection: List[str]) -> bool:
-        """Return True if in the connection is a serial monitor connection."""
+        """Return True if the connection is a serial monitor connection."""
         return connection[:3] in [conn[:3] for conn in self.serial_connections]
 
     def filter_parts(self, parts: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -186,8 +186,9 @@ class DiagramSync:
             # Update platform data
             upload_binary["diagram"][plat] = platform_diagram
 
-            click.echo(f"- {plat}: Processed platform: {plat} with {len(platform_diagram['parts'])} \
-                       parts and {len(platform_diagram['connections'])} connections")
+            click.echo(
+                f"- {plat}: Processed platform: {plat} with {len(platform_diagram['parts'])} parts and {len(platform_diagram['connections'])} connections"
+            )
 
         # Ensure the modified upload_binary is saved back to ci_data
         ci_data["upload-binary"] = upload_binary
@@ -293,7 +294,6 @@ class DiagramSync:
             click.echo(f"- Found description in ci.yml: {description}")
             config_data[project_name]['description'] = description
 
-        # Save using TOML library
         save_toml(config_file, config_data, override)
 
         click.echo(f"Generated ESP LaunchPad config: {config_file}")

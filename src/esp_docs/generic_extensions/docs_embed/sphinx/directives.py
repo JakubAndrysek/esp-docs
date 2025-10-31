@@ -240,10 +240,9 @@ class WokwiExampleDirective(Directive):
             code_block['language'] = 'arduino'
             code_block['classes'] = ['highlight']
 
-            # Create source code panel
             source_panel = TabPanelNode()
             source_panel["label"] = ino_filename
-            source_panel["active"] = True  # Source code tab is active by default
+            source_panel["active"] = True
             source_panel.children = [code_block]
             code_panels.append(source_panel)
 
