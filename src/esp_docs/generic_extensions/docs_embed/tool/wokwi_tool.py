@@ -69,7 +69,7 @@ class DiagramSync:
 
     def init_project(self, platforms_list: List[str], override: bool) -> None:
         """Initialize project by generating diagrams for specified platforms.
-        
+
         Args:
             platforms_list: List of platform names to generate diagrams for
             override: Whether to overwrite existing diagram files
@@ -95,10 +95,10 @@ class DiagramSync:
 
     def get_platforms_from_ci(self) -> List[str]:
         """Get all platforms from ci.yml targets.
-        
+
         Reads the ci.yml file and extracts platform names from the
         upload-binary section.
-        
+
         Returns:
             List of platform names from ci.yml, or empty list if file doesn't exist
         """
@@ -111,10 +111,10 @@ class DiagramSync:
 
     def get_platforms_from_diagrams(self) -> List[str]:
         """Get all platforms from existing diagram files.
-        
+
         Scans the base directory for diagram.*.json files and extracts
         platform names from the filenames.
-        
+
         Returns:
             List of platform names found in diagram files
         """
@@ -168,10 +168,10 @@ class DiagramSync:
 
     def generate_ci_from_diagram(self, platform: Optional[str] = None, override: bool = False) -> None:
         """Generate ci.yml from diagram files.
-        
+
         Processes diagram files and extracts platform-specific configuration
         to generate or update the ci.yml file with upload-binary section.
-        
+
         Args:
             platform: Optional specific platform to process. If None, all platforms are processed.
             override: Whether to overwrite the upload-binary section if it exists
@@ -209,7 +209,7 @@ class DiagramSync:
 
     def _process_diagram_file_to_ci(self, platform: str, upload_binary: Dict[str, Any]) -> None:
         """Process a single diagram file and update upload_binary configuration.
-        
+
         Args:
             platform: Platform name to process
             upload_binary: Dictionary to update with processed configuration
@@ -253,11 +253,11 @@ class DiagramSync:
         )
 
     def generate_diagram_from_ci(self, platform: Optional[str] = None, override: bool = False) -> None:
-        """Generate diagram files from ci.yml + diagram-default.json.
-        
+        """Generate diagram files from ci.yml.
+
         Reads platform-specific diagram configuration from ci.yml and generates
         diagram.*.json files by merging them with default diagram configurations.
-        
+
         Args:
             platform: Optional specific platform to generate. If None, generates for all platforms in ci.yml
             override: Whether to overwrite existing diagram files
@@ -282,7 +282,7 @@ class DiagramSync:
 
     def generate_diagram(self, platform: str, override: bool = False, config_data: Optional[Dict[str, Any]] = None) -> None:
         """Generate a diagram file for the specified platform.
-        
+
         Args:
             platform: Target platform name
             override: Whether to overwrite existing diagram files
@@ -290,7 +290,7 @@ class DiagramSync:
         """
         if config_data is None:
             config_data = {}
-            
+
         diagram_file = self.base_path / f"diagram.{platform}.json"
 
         # Check if file exists and we're not overriding
@@ -320,22 +320,22 @@ class DiagramSync:
 
     def generate_launchpad_config(self, storage_url_prefix: str, repo_url_prefix: str, override: bool = False, output_dir: Optional[Path] = None) -> None:
         """Generate ESP LaunchPad config file from ci.yml targets.
-        
+
         Creates a TOML configuration file for ESP LaunchPad with firmware images,
         supported chipsets, and project metadata extracted from ci.yml.
-        
+
         Args:
             storage_url_prefix: Base URL prefix for firmware images
             repo_url_prefix: Base URL prefix for repository resources
             override: Whether to overwrite existing config files
             output_dir: Optional output directory. If None, uses base_path
-            
+
         Raises:
             Click exceptions for missing ci.yml or no platforms found
         """
         project_name = self.base_path.name
         config_file = (output_dir / LAUNCHPAD_CONFIG_FILE) if output_dir else (self.base_path / LAUNCHPAD_CONFIG_FILE)
-        
+
         if config_file.exists() and not override:
             click.echo(f"Warning: {config_file} already exists. Use --override to overwrite.")
             return
@@ -387,7 +387,7 @@ class DiagramSync:
 
     def _add_platform_image_config(self, config_data: Dict[str, Any], project_name: str, platform: str) -> None:
         """Add platform-specific image configuration to LaunchPad config.
-        
+
         Args:
             config_data: Configuration dictionary to update
             project_name: Name of the project

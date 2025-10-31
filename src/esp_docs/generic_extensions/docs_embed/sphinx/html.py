@@ -20,10 +20,10 @@ from .nodes import WokwiNode, WokwiTabsNode, TabListNode, TabPanelNode
 
 def _render_iframe_attrs(node: WokwiNode) -> tuple[str, str, str]:
     """Render iframe HTML attributes from WokwiNode configuration.
-    
+
     Args:
         node: WokwiNode containing diagram and viewer configuration
-        
+
     Returns:
         Tuple of (attribute_string, allowfullscreen_string, viewer_url)
         - attribute_string: Space-separated iframe attributes (src, width, height, etc.)
@@ -55,7 +55,7 @@ def _render_iframe_attrs(node: WokwiNode) -> tuple[str, str, str]:
 
 def visit_wokwi_html(self, node: WokwiNode):
     """Visit WokwiNode and render as HTML iframe with Wokwi UI frame.
-    
+
     Generates HTML for a single diagram viewer embedded in a styled frame
     with header showing Wokwi branding and action buttons (info, fullscreen).
     """
@@ -104,7 +104,7 @@ def depart_wokwi_html(self, node: WokwiNode):
 
 def visit_wokwi_tabs_html(self, node: WokwiTabsNode):
     """Visit WokwiTabsNode and render as HTML tabbed container.
-    
+
     Creates the root div wrapper for a tabbed interface with appropriate
     CSS classes and data attributes for styling and JavaScript interaction.
     """
@@ -120,7 +120,7 @@ def depart_wokwi_tabs_html(self, node: WokwiTabsNode):
 
 def visit_tablist_html(self, node: TabListNode):
     """Visit TabListNode and render as HTML tab header bar.
-    
+
     Generates the interactive tab buttons and header sections organized into groups:
     - CODE group: Source code file tab(s) with GitHub link
     - WOKWI SIMULATOR group: Diagram tab(s) with Wokwi branding
@@ -217,7 +217,7 @@ def depart_tablist_html(self, node: TabListNode):
 
 def visit_tabpanel_html(self, node: TabPanelNode):
     """Visit TabPanelNode and render as HTML tab content panel.
-    
+
     Creates a tab panel div that can be shown/hidden via JavaScript based on
     tab selection. Stores viewer URL for use by interactive scripts.
     """
@@ -242,10 +242,10 @@ def depart_tabpanel_html(self, node: TabPanelNode):
 
 def _fallback_text(viewer_url: str) -> str:
     """Generate fallback text representation of a Wokwi diagram.
-    
+
     Args:
         viewer_url: Complete iframe URL
-        
+
     Returns:
         Human-readable text representation
     """
@@ -254,11 +254,11 @@ def _fallback_text(viewer_url: str) -> str:
 
 def visit_wokwi_text(self, node: WokwiNode):
     """Visit WokwiNode and render as plain text (fallback format).
-    
+
     Used for text-based output formats where HTML/interactive content isn't supported.
     Outputs viewer URL so users can access the diagram if needed.
     """
-    viewer_url = iframe_url(node.get("iframe_page"), node.get("diagram"), node.get("firmware"))
+    viewer_url = iframe_url(node.get("iframe_page"), node.get("diagram_url"), node.get("firmware_url"))
     self.add_text(_fallback_text(viewer_url))
     raise _n.SkipNode
 
@@ -304,11 +304,11 @@ def depart_tabpanel_text(self, node: TabPanelNode):
 
 def visit_wokwi_latex(self, node: WokwiNode):
     """Visit WokwiNode and render as LaTeX URL reference.
-    
+
     Generates a clickable URL for PDF output, since interactive iframes
     are not supported in LaTeX/PDF format.
     """
-    viewer_url = iframe_url(node.get("iframe_page"), node.get("diagram"), node.get("firmware"))
+    viewer_url = iframe_url(node.get("iframe_page"), node.get("diagram_url"), node.get("firmware_url"))
     self.body.append(r"\url{" + viewer_url + "}")
     raise _n.SkipNode
 

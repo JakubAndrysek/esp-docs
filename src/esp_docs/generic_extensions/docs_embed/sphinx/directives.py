@@ -120,8 +120,8 @@ class WokwiDirective(Directive):
 
         node = WokwiNode()
         node["iframe_page"] = cfg.docs_embed_wokwi_viewer_url
-        node["diagram"] = diagram_url
-        node["firmware"] = firmware_url
+        node["diagram_url"] = diagram_url
+        node["firmware_url"] = firmware_url
         node["width"] = self.options.get("width", cfg.docs_embed_default_width)
         node["height"] = self.options.get("height", cfg.docs_embed_default_height)
         node["title"] = self.options.get("title", "Wokwi simulation")
@@ -349,7 +349,6 @@ class WokwiExampleDirective(Directive):
             launchpad_base_url = getattr(env.app.config, "docs_embed_esp_launchpad_url", "")
             sep = "&" if "?" in launchpad_base_url else "?"
             tablist["launchpad_href"] = f"{launchpad_base_url.rstrip('/')}/{sep}flashConfigURL={launchpad_url}"
-            print(f"Launchpad URL: {tablist['launchpad_href']}")
 
         # Link to GitHub source .ino file
         github_base = getattr(cfg, "docs_embed_github_base_url")

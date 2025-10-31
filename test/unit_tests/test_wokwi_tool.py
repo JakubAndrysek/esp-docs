@@ -6,7 +6,6 @@ import tempfile
 import shutil
 import unittest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 from esp_docs.generic_extensions.docs_embed.tool.wokwi_tool import DiagramSync, target_to_boards
 
