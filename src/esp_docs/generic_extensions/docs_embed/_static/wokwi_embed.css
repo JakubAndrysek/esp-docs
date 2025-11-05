@@ -85,30 +85,6 @@
   flex: 1;
 }
 
-/* Source code link */
-.wokwi-source-link {
-  margin-bottom: .25rem;
-}
-
-.wokwi-source-link-btn {
-  display: inline-block;
-  font-size: .75rem;
-  font-weight: 500;
-  color: #3b82f6;            /* blue-500 */
-  text-decoration: none;
-  padding: .2rem .4rem;
-  border: 1px solid #3b82f6;
-  border-radius: .25rem;
-  background: transparent;
-  transition: all 0.2s ease;
-}
-
-.wokwi-source-link-btn:hover {
-  background: #3b82f6;
-  color: #ffffff;
-  text-decoration: none;
-}
-
 /* Header actions (info + fullscreen in simulator header) */
 .wokwi-header-actions {
   display: flex;

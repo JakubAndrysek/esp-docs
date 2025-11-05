@@ -73,7 +73,6 @@ def init_project(ctx: click.Context, platforms: str, override: bool):
             sys.exit(1)
 
         sync.init_project(platforms_list, override)
-        click.echo("Project initialization completed successfully!")
     except FileNotFoundError as e:
         click.echo(f"Error: Directory not found - {e}", err=True)
         sys.exit(1)
@@ -107,7 +106,6 @@ def ci_from_diagram(ctx: click.Context, platform, override):
         sync = DiagramSync(ctx.obj.get("path"))
         click.echo("Generating ci.yml from diagram files...")
         sync.generate_ci_from_diagram(platform, override)
-        click.echo("CI configuration generation completed successfully!")
     except FileNotFoundError as e:
         click.echo(f"Error: Directory not found - {e}", err=True)
         sys.exit(1)
@@ -190,7 +188,6 @@ def launchpad_config(ctx: click.Context, storage_url_prefix, repo_url_prefix, ov
         sync = DiagramSync(ctx.obj.get("path"))
         click.echo("Generating ESP LaunchPad configuration...")
         sync.generate_launchpad_config(storage_url_prefix, repo_url_prefix, override)
-        click.echo("ESP LaunchPad configuration generation completed successfully!")
     except FileNotFoundError as e:
         click.echo(f"Error: Directory not found - {e}", err=True)
         sys.exit(1)
