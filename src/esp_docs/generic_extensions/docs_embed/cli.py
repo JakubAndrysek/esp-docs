@@ -27,7 +27,7 @@ from esp_docs.generic_extensions.docs_embed.tool.wokwi_tool import (
 @click.pass_context
 def main(ctx: click.Context, path: str):
     """Main command group for diagram synchronization tools.
-    
+
     All commands operate on a specified directory containing project files.
     By default, uses the current directory (.).
     """
@@ -64,7 +64,7 @@ def init_project(ctx: click.Context, platforms: str, override: bool):
         platforms_list = [p.strip() for p in platforms.split(",") if p.strip()]
         allowed = set(target_to_boards.keys())
         invalid = [p for p in platforms_list if p not in allowed]
-        
+
         if invalid:
             click.echo(
                 f"Invalid platform(s): {', '.join(invalid)}. Allowed: {', '.join(sorted(allowed))}",
@@ -95,10 +95,10 @@ def init_project(ctx: click.Context, platforms: str, override: bool):
 @click.pass_context
 def ci_from_diagram(ctx: click.Context, platform, override):
     """Generate ci.yml from diagram files.
-    
+
     Reads diagram.*.json files and extracts their configuration to generate
     or update the ci.yml file with the upload-binary section.
-    
+
     Examples:
       docs-embed ci-from-diagram
       docs-embed --path folder/examples ci-from-diagram --platform esp32 --override
@@ -129,10 +129,10 @@ def ci_from_diagram(ctx: click.Context, platform, override):
 @click.pass_context
 def diagram_from_ci(ctx: click.Context, platform, override):
     """Generate diagram files from ci.yml configuration.
-    
+
     Reads platform-specific diagram configurations from ci.yml and generates
     diagram.*.json files by merging them with default diagram templates.
-    
+
     Examples:
       docs-embed diagram-from-ci
       docs-embed --path folder/examples diagram-from-ci --platform esp32 --override
@@ -141,7 +141,6 @@ def diagram_from_ci(ctx: click.Context, platform, override):
         sync = DiagramSync(ctx.obj.get("path"))
         click.echo("Generating diagram files from ci.yml...")
         sync.generate_diagram_from_ci(platform, override)
-        click.echo("Diagram generation completed successfully!")
     except FileNotFoundError as e:
         click.echo(f"Error: Directory not found - {e}", err=True)
         sys.exit(1)
@@ -173,14 +172,14 @@ def diagram_from_ci(ctx: click.Context, platform, override):
 @click.pass_context
 def launchpad_config(ctx: click.Context, storage_url_prefix, repo_url_prefix, override):
     """Generate ESP LaunchPad configuration file.
-    
+
     Creates a TOML configuration file for ESP LaunchPad with firmware images,
     supported chipsets, and project metadata extracted from ci.yml.
-    
+
     Can use environment variables:
       - STORAGE_URL_PREFIX: URL prefix for firmware binaries
       - REPO_URL_PREFIX: URL prefix for repository
-    
+
     Examples:
       docs-embed launchpad-config --storage-url-prefix https://storage.url --repo-url-prefix https://repo.url
       docs-embed --path folder/examples launchpad-config \\
