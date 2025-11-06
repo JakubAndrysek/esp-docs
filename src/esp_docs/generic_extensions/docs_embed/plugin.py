@@ -90,6 +90,7 @@ def _register_static(app: Sphinx) -> None:
         app.config.html_static_path.append(str(pkg_static))
     app.add_css_file("wokwi_embed.css")
     app.add_js_file("wokwi_embed.js")
+    app.add_js_file("wokwi_client.js")
 
 
 def setup(app: Sphinx) -> dict:

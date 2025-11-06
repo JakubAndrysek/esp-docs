@@ -120,6 +120,7 @@ class WokwiDirective(Directive):
 
         node = WokwiNode()
         node["iframe_page"] = cfg.docs_embed_wokwi_viewer_url
+        node["iframe_page_params"] = {"api": "1"}  # Enable Wokwi API
         node["diagram_url"] = diagram_url
         node["firmware_url"] = firmware_url
         node["width"] = self.options.get("width", cfg.docs_embed_default_width)
@@ -279,6 +280,7 @@ class WokwiExampleDirective(Directive):
             # Create WokwiNode
             wn = WokwiNode()
             wn["iframe_page"] = cfg.docs_embed_wokwi_viewer_url
+            wn["iframe_page_params"] = {"api": "1"}  # Enable Wokwi API
             wn["diagram_url"] = diagram_url
             wn["firmware_url"] = firmware_url
             wn["width"] = self.options.get("width", getattr(cfg, "docs_embed_default_width"))
