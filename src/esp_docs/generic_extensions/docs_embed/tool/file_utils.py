@@ -15,22 +15,6 @@ import click
 import yaml
 import tomli_w
 
-
-class _IndentedDumper(yaml.Dumper):
-    """Custom YAML dumper that adds proper indentation before list items.
-    
-    By default, PyYAML dumps lists without indentation before the dash:
-        my_list:
-        - item1
-        
-    This dumper forces proper indentation:
-        my_list:
-          - item1
-    """
-    def increase_indent(self, flow=False, indentless=False):
-        return super(_IndentedDumper, self).increase_indent(flow, False)
-
-
 def load_json(file_path: Path) -> Dict[str, Any]:
     """Load and parse a JSON file with error handling.
     
@@ -110,8 +94,7 @@ def save_yaml(file_path: Path, data: Dict[str, Any], override: bool = False) -> 
     file_path.parent.mkdir(parents=True, exist_ok=True)
     try:
         with open(file_path, 'w', encoding='utf-8') as f:
-            yaml.dump(data, f, Dumper=_IndentedDumper, default_flow_style=False, allow_unicode=True, sort_keys=False, indent=2)
-            # yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False, indent=2)
+            yaml.safe_dump(data, f, default_flow_style=False, allow_unicode=True, sort_keys=False, indent=2)
     except Exception as e:
         click.echo(f"Error: Failed to write YAML to {file_path}: {e}", err=True)
         sys.exit(1)
