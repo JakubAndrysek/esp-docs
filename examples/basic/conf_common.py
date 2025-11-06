@@ -7,6 +7,7 @@ idf_targets = TARGETS
 
 extensions += ['sphinx_copybutton',
                'sphinxcontrib.wavedrom',
+               'esp_docs.generic_extensions.docs_embed',
                ]
 
 # link roles config

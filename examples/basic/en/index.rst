@@ -37,3 +37,21 @@ For documentation about esp-docs please see https://github.com/espressif/esp-doc
     :maxdepth: 1
 
     Subpage <subpage>
+
+Wokwi embed example
+===================
+
+
+
+
+.. wokwi-example:: libraries/ESP32/examples/GPIO/Blink
+
+
+
+------
+
+Separate
+
+.. wokwi::
+  :diagram: https://it.kubaandrysek.cz/wokwi/gpio-basic-s3.json
+  :firmware: https://it.kubaandrysek.cz/wokwi/gpio-basic-s3.bin
