@@ -17,19 +17,15 @@ import tomli_w
 
 def load_json(file_path: Path) -> Dict[str, Any]:
     """Load and parse a JSON file with error handling.
-    
+
     Args:
         file_path: Path to the JSON file to load
-        
+
     Returns:
         Dictionary containing the parsed JSON data
-        
+
     Raises:
         SystemExit: If file not found or JSON is invalid
-        
-    Examples:
-        config = load_json(Path("config.json"))
-        data = load_json(Path("relative/path/file.json"))
     """
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -44,19 +40,15 @@ def load_json(file_path: Path) -> Dict[str, Any]:
 
 def load_yaml(file_path: Path) -> Dict[str, Any]:
     """Load and parse a YAML file with error handling.
-    
+
     Args:
         file_path: Path to the YAML file to load
-        
+
     Returns:
         Dictionary containing the parsed YAML data
-        
+
     Raises:
         SystemExit: If file not found or YAML is invalid
-        
-    Examples:
-        config = load_yaml(Path("config.yml"))
-        data = load_yaml(Path("ci.yaml"))
     """
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -71,21 +63,17 @@ def load_yaml(file_path: Path) -> Dict[str, Any]:
 
 def save_yaml(file_path: Path, data: Dict[str, Any], override: bool = False) -> None:
     """Save data as a YAML file with proper formatting.
-    
+
     Creates parent directories if they don't exist. Uses safe_dump to avoid
     arbitrary code execution and formats output for readability.
-    
+
     Args:
         file_path: Path where the YAML file will be saved
         data: Dictionary to serialize as YAML
         override: If False, skip if file exists; if True, overwrite existing file
-        
+
     Raises:
         SystemExit: If file write operation fails
-        
-    Examples:
-        save_yaml(Path("config.yml"), {"key": "value"})
-        save_yaml(Path("output/ci.yaml"), config_dict, override=True)
     """
     if file_path.exists() and not override:
         click.echo(f"Warning: {file_path} already exists. Use --override to overwrite.")
@@ -104,21 +92,17 @@ def save_yaml(file_path: Path, data: Dict[str, Any], override: bool = False) -> 
 
 def save_json(file_path: Path, data: Dict[str, Any], override: bool = False) -> None:
     """Save data as a JSON file with proper formatting.
-    
+
     Creates parent directories if they don't exist. Uses 2-space indentation
     for readability and preserves Unicode characters.
-    
+
     Args:
         file_path: Path where the JSON file will be saved
         data: Dictionary to serialize as JSON
         override: If False, skip if file exists; if True, overwrite existing file
-        
+
     Raises:
         SystemExit: If file write operation fails
-        
-    Examples:
-        save_json(Path("config.json"), {"key": "value"})
-        save_json(Path("output/data.json"), config_dict, override=True)
     """
     if file_path.exists() and not override:
         click.echo(f"Warning: {file_path} already exists. Use --override to overwrite.")
@@ -137,21 +121,17 @@ def save_json(file_path: Path, data: Dict[str, Any], override: bool = False) -> 
 
 def save_toml(file_path: Path, data: Dict[str, Any], override: bool = False) -> None:
     """Save data as a TOML file with proper formatting.
-    
+
     Creates parent directories if they don't exist. TOML format is commonly used
     for configuration files and is more human-readable than JSON.
-    
+
     Args:
         file_path: Path where the TOML file will be saved
         data: Dictionary to serialize as TOML
         override: If False, skip if file exists; if True, overwrite existing file
-        
+
     Raises:
         SystemExit: If file write operation fails
-        
-    Examples:
-        save_toml(Path("launchpad.toml"), {"project": {...}})
-        save_toml(Path("output/config.toml"), config_dict, override=True)
     """
     if file_path.exists() and not override:
         click.echo(f"Warning: {file_path} already exists. Use --override to overwrite.")

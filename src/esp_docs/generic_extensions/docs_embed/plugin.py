@@ -8,7 +8,7 @@ Configuration:
     The plugin can be configured via:
     1. Environment variables (prefixed with uppercase config key name)
     2. conf.py settings in your Sphinx configuration
-    
+
     See CONFIG_DEFAULTS for all available configuration options.
 """
 
@@ -48,14 +48,14 @@ def _override_config_from_env(app: Sphinx, config) -> None:
 
     Checks for environment variables matching each config key name in uppercase.
     For example: docs_embed_github_branch -> DOCS_EMBED_GITHUB_BRANCH
-    
+
     Required config values (set to None) must be provided via environment variables
     or will raise a RuntimeError.
-    
+
     Args:
         app: Sphinx application instance
         config: Sphinx configuration object
-        
+
     Raises:
         RuntimeError: If a required config value is not set and no env var provided
     """
@@ -76,10 +76,10 @@ def _override_config_from_env(app: Sphinx, config) -> None:
 
 def _register_static(app: Sphinx) -> None:
     """Register static assets (CSS and JavaScript) for the Wokwi embed plugin.
-    
+
     Adds the plugin's static files to Sphinx's html_static_path and registers
     the wokwi_embed.css and wokwi_embed.js files for inclusion in HTML output.
-    
+
     Args:
         app: Sphinx application instance
     """
@@ -95,13 +95,13 @@ def _register_static(app: Sphinx) -> None:
 
 def setup(app: Sphinx) -> dict:
     """Setup the Wokwi embed Sphinx extension.
-    
+
     Registers all configuration values, directives, nodes, and event handlers.
     This function is called automatically by Sphinx when loading the extension.
-    
+
     Args:
         app: Sphinx application instance
-        
+
     Returns:
         Dictionary with extension metadata (version, parallel safety flags)
     """
@@ -121,7 +121,7 @@ def setup(app: Sphinx) -> dict:
         latex=(html.visit_wokwi_latex, html.depart_wokwi_latex),
         man=(html.visit_wokwi_text, html.depart_wokwi_text),
     )
-    
+
     # WokwiTabsNode: Tabbed diagram view
     app.add_node(
         WokwiTabsNode,
@@ -133,7 +133,7 @@ def setup(app: Sphinx) -> dict:
         latex=(html.visit_wokwi_tabs_latex, html.depart_wokwi_tabs_latex),
         man=(html.visit_wokwi_tabs_text, html.depart_wokwi_tabs_text),
     )
-    
+
     # TabListNode: Container for tab headers
     app.add_node(
         TabListNode,
@@ -145,7 +145,7 @@ def setup(app: Sphinx) -> dict:
         latex=(html.visit_tablist_latex, html.depart_tablist_latex),
         man=(html.visit_tablist_text, html.depart_tablist_text),
     )
-    
+
     # TabPanelNode: Individual tab content
     app.add_node(
         TabPanelNode,
@@ -167,7 +167,7 @@ def setup(app: Sphinx) -> dict:
     app.connect("builder-inited", _register_static)
 
     return {
-        "version": "0.7.0",
+        "version": "0.0.1",
         "parallel_read_safe": True,
         "parallel_write_safe": True,
     }

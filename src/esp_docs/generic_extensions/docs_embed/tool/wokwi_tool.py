@@ -329,9 +329,6 @@ class DiagramSync:
             repo_url_prefix: Base URL prefix for repository resources
             override: Whether to overwrite existing config files
             output_dir: Optional output directory. If None, uses base_path
-
-        Raises:
-            Click exceptions for missing ci.yml or no platforms found
         """
         project_name = self.base_path.name
         config_file = (output_dir / LAUNCHPAD_CONFIG_FILE) if output_dir else (self.base_path / LAUNCHPAD_CONFIG_FILE)

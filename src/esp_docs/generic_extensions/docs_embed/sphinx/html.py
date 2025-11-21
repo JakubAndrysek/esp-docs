@@ -131,7 +131,7 @@ def visit_tablist_html(self, node: TabListNode):
     tabs_code = node.get("tabs_code", [])
     tabs_wokwi = node.get("tabs_wokwi", [])
     github_href = node.get("github_href")
-    about_wokwi_url = getattr(self.builder.app.config, "about_wokwi_url", None)
+    about_wokwi_url = getattr(self.builder.app.config, "docs_embed_about_wokwi_url", None)
     launchpad_href = node.get("launchpad_href")
     static_path = node.get("static_path")
 
